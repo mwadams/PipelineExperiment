@@ -1,9 +1,6 @@
 ﻿namespace PipelineExperiment;
 
-using System.Diagnostics.CodeAnalysis;
-using Yarp.ReverseProxy.Transforms;
-
-using YarpPipelineStep = Pipelines.PipelineStep<YarpProcessingContext, YarpProcessingContext>;
+using YarpPipelineStep = Pipelines.PipelineStep<Yarp.ReverseProxy.Transforms.RequestTransformContext, YarpPipelineResult>;
 
 // The result of a YARP processing pipeline step
 public readonly struct YarpPipelineResult
@@ -17,28 +14,22 @@ public readonly struct YarpPipelineResult
         this.pipelineState = pipelineState;
     }
 
-    internal static YarpPipelineStep TerminateWith(RequestTransformContext context, NonForwardedResponseDetails responseDetails)
+    internal static YarpPipelineStep TerminateWith(NonForwardedResponseDetails responseDetails)
     {
         return YarpPipelineStep.FromResult(
-            new YarpProcessingContext(
-                context,
-                new(responseDetails, TransformState.Terminate)));
+            new(responseDetails, TransformState.Terminate));
     }
 
-    internal static YarpPipelineStep TerminateAndForward(RequestTransformContext context)
+    internal static YarpPipelineStep TerminateAndForward()
     {
         return YarpPipelineStep.FromResult(
-            new YarpProcessingContext(
-                context,
-                new(default, TransformState.TerminateAndForward)));
+            new(default, TransformState.TerminateAndForward));
     }
 
-    internal static YarpPipelineStep Continue(RequestTransformContext context)
+    internal static YarpPipelineStep Continue()
     {
         return YarpPipelineStep.FromResult(
-            new YarpProcessingContext(
-                context,
-                new(default, TransformState.Continue)));
+            new(default, TransformState.Continue));
     }
 
     /// <summary>
@@ -51,7 +42,7 @@ public readonly struct YarpPipelineResult
     /// Used by whoever executed the pipeline to determine whether we should forward the result,
     /// or build a local response using the resulting response details.
     /// </summary>
-    public bool ShouldForward([NotNullWhen(false)] out NonForwardedResponseDetails? responseDetails)
+    public bool ShouldForward(out NonForwardedResponseDetails responseDetails)
     {
         if (pipelineState == TransformState.Continue || pipelineState == TransformState.TerminateAndForward)
         {

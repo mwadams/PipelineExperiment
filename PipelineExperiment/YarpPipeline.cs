@@ -3,19 +3,20 @@
 using PipelineExperiment.Pipelines;
 
 using Yarp.ReverseProxy.Transforms;
-using YarpPipelineStep = Pipelines.PipelineStep<YarpProcessingContext, YarpProcessingContext>;
+
+using YarpPipelineStep = Pipelines.PipelineStep<Yarp.ReverseProxy.Transforms.RequestTransformContext, YarpPipelineResult>;
 
 public static class YarpPipeline
 {
     public static YarpPipelineStep Build(
-        params Func<YarpProcessingContext, YarpPipelineStep>[] steps)
+        params Func<RequestTransformContext, YarpPipelineStep>[] steps)
     {
         // This is the sort of the thing, but clearly we're building the array again
         return Pipeline.Build(ShouldTerminatePipeline, steps.Select(s => Pipeline.MakeStep(s)).ToArray());
     }
 
     public static YarpPipelineStep Build(
-        params Func<YarpProcessingContext, ValueTask<YarpPipelineStep>>[] steps)
+        params Func<RequestTransformContext, ValueTask<YarpPipelineStep>>[] steps)
     {
         // This is the sort of the thing, but clearly we're building the array again
         return Pipeline.Build(ShouldTerminatePipeline, steps.Select(s => Pipeline.MakeStep(s)).ToArray());
@@ -28,24 +29,35 @@ public static class YarpPipeline
         return Pipeline.Build(ShouldTerminatePipeline, steps);
     }
 
-    public static YarpPipelineStep TerminateWith(YarpProcessingContext context, NonForwardedResponseDetails responseDetails)
+    public static YarpPipelineStep TerminateWith(NonForwardedResponseDetails responseDetails)
     {
-        return YarpPipelineResult.TerminateWith(context.RequestTransformContext, responseDetails);
+        return YarpPipelineResult.TerminateWith(responseDetails);
     }
 
-    public static YarpPipelineStep TerminateAndForward(YarpProcessingContext context)
+    public static YarpPipelineStep TerminateAndForward()
     {
-        return YarpPipelineResult.TerminateAndForward(context.RequestTransformContext);
+        return YarpPipelineResult.TerminateAndForward();
     }
 
-    public static YarpPipelineStep Continue(YarpProcessingContext context)
+    public static YarpPipelineStep Continue()
     {
-        return YarpPipelineResult.Continue(context.RequestTransformContext);
+        return YarpPipelineResult.Continue();
     }
 
-
-    private static bool ShouldTerminatePipeline(YarpProcessingContext context)
+    public static YarpPipelineStep MakeStep(
+        Func<RequestTransformContext, YarpPipelineStep> step)
     {
-        return context.StepResult.ShouldTerminatePipeline;
+        return new YarpPipelineStep(input => ValueTask.FromResult(step(input)));
+    }
+
+    public static YarpPipelineStep MakeStep(
+        Func<RequestTransformContext, ValueTask<YarpPipelineStep>> step)
+    {
+        return new YarpPipelineStep(step);
+    }
+
+    private static bool ShouldTerminatePipeline(YarpPipelineResult result)
+    {
+        return result.ShouldTerminatePipeline;
     }
 }
