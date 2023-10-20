@@ -22,7 +22,15 @@ public static class ExampleYarpPipeline
                                 {
                                     if (result.WasHandled(out string? message))
                                     {
-                                        ctx.HttpContext.Items["Message"] = message;
+                                        if (message is string msg)
+                                        {
+                                            ctx.HttpContext.Items["Message"] = msg;
+                                            return YarpPipeline.Continue();
+                                        }
+                                        else
+                                        {
+                                            return YarpPipeline.TerminateWith(new(400));
+                                        }
                                     }
 
                                     return YarpPipeline.Continue();
@@ -30,7 +38,7 @@ public static class ExampleYarpPipeline
             }),
             YarpPipeline.MakeStep(ctx => ctx.HttpContext.Items["Message"] is string message
                         ? YarpPipeline.Continue()
-                        : YarpPipeline.TerminateWith(new(400))));
+                        : YarpPipeline.TerminateWith(new(404))));
 
     private static PipelineStep<RequestTransformContext, YarpPipelineResult> InnerPipelineInstance { get; } =
         YarpPipeline.Build(
@@ -42,12 +50,12 @@ public static class ExampleYarpPipeline
                         : YarpPipeline.Continue()
             );
 
-    private static PipelineStep<RequestTransformContext, HandlerResult<string>> MessageHandlerPipelineInstance { get; } =
+    private static PipelineStep<RequestTransformContext, HandlerResult<string?>> MessageHandlerPipelineInstance { get; } =
         MessageHandlerPipeline.Build(
             ctx => ctx.Path == "/foo"
                         ? MessageHandlerPipeline.Handled("We're looking at a foo")
                         : MessageHandlerPipeline.NotHandled(),
             ctx => ctx.Path == "/bar"
-                        ? MessageHandlerPipeline.Handled("We're looking at a bar")
+                        ? MessageHandlerPipeline.Handled(null)
                         : MessageHandlerPipeline.NotHandled());
 }

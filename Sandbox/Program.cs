@@ -3,22 +3,28 @@ using PipelineExperiment;
 using Sandbox;
 using Yarp.ReverseProxy.Transforms;
 
-RequestTransformContext ctx = new() { HttpContext = new DefaultHttpContext() { Request = { Path = "/foo" } }, Path = "/foo" };
+string[] paths = ["/foo", "/bar", "/fizz", "/", "/baz"];
 
-var computedResult = await ExampleYarpPipeline.Instance.RunAsync(ctx).ConfigureAwait(false);
-
-if (computedResult.TryGetResult(out YarpPipelineResult result))
+foreach (var path in paths)
 {
-    if (result.ShouldForward(out NonForwardedResponseDetails responseDetails))
+    Console.WriteLine($"Handling: {path}");
+    RequestTransformContext ctx = new() { HttpContext = new DefaultHttpContext() { Request = { Path = path } }, Path = path };
+
+    var computedResult = await ExampleYarpPipeline.Instance.RunAsync(ctx).ConfigureAwait(false);
+
+    if (computedResult.TryGetResult(out YarpPipelineResult result))
     {
-        Console.WriteLine($"Forwarding, message is: {ctx.HttpContext.Items["Message"] ?? "not set"}");
+        if (result.ShouldForward(out NonForwardedResponseDetails responseDetails))
+        {
+            Console.WriteLine($"Forwarding, message is: {ctx.HttpContext.Items["Message"] ?? "not set"}");
+        }
+        else
+        {
+            Console.WriteLine($"Not forwarding: Status Code {responseDetails.StatusCode}");
+        }
     }
     else
     {
-        Console.WriteLine($"Not forwarding: Status Code {responseDetails.StatusCode}");
+        Console.WriteLine("Shouldn't get here.");
     }
-}
-else
-{
-    Console.WriteLine("Shouldn't get here.");
 }
