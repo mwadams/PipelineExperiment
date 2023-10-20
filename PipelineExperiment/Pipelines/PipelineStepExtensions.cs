@@ -4,6 +4,7 @@ public static class PipelineStepExtensions
 {
     public static PipelineStep<TBoundInput, TOutput> BindInput<TInput, TOutput, TBoundInput>(this PipelineStep<TInput, TOutput> step, Func<TBoundInput, TInput> inputBinding)
     {
+        // This captures inputBinding and step
         return PipelineStep<TBoundInput, TOutput>.MakeStep(async input =>
         {
             var boundInput = inputBinding(input);
@@ -19,6 +20,7 @@ public static class PipelineStepExtensions
 
     public static PipelineStep<TBoundInput, TOutput> BindInput<TInput, TOutput, TBoundInput>(this PipelineStep<TInput, TOutput> step, Func<TBoundInput, ValueTask<TInput>> inputBinding)
     {
+        // This captures inputBinding and step
         return PipelineStep<TBoundInput, TOutput>.MakeStep(async input =>
         {
             var boundInput = await inputBinding(input).ConfigureAwait(false);
@@ -32,8 +34,9 @@ public static class PipelineStepExtensions
         });
     }
 
-    public static PipelineStep<TInput, TBoundOutput> Bind<TInput, TOutput, TBoundOutput>(this PipelineStep<TInput, TOutput> step, Func<TOutput, PipelineStep<TInput, TBoundOutput>> binding)
+    public static PipelineStep<TInput, TBoundOutput> Bind<TInput, TOutput, TBoundOutput>(this PipelineStep<TInput, TOutput> step, Func<TInput, TOutput, PipelineStep<TInput, TBoundOutput>> binding)
     {
+        // This captures binding and step
         return PipelineStep<TInput, TBoundOutput>.MakeStep(async input =>
         {
             var computedStep = await step.RunAsync(input).ConfigureAwait(false);
@@ -42,12 +45,13 @@ public static class PipelineStepExtensions
                 throw new InvalidOperationException("The computed result must exist after RunAsync()");
             }
 
-            return binding(computedResult);
+            return binding(input, computedResult);
         });
     }
 
-    public static PipelineStep<TInput, TBoundOutput> Bind<TInput, TOutput, TBoundOutput>(this PipelineStep<TInput, TOutput> step, Func<TOutput, ValueTask<PipelineStep<TInput, TBoundOutput>>> binding)
+    public static PipelineStep<TInput, TBoundOutput> Bind<TInput, TOutput, TBoundOutput>(this PipelineStep<TInput, TOutput> step, Func<TInput, TOutput, ValueTask<PipelineStep<TInput, TBoundOutput>>> binding)
     {
+        // This captures binding and step
         return PipelineStep<TInput, TBoundOutput>.MakeStep(async input =>
         {
             var computedStep = await step.RunAsync(input).ConfigureAwait(false);
@@ -56,7 +60,7 @@ public static class PipelineStepExtensions
                 throw new InvalidOperationException("The computed result must exist after RunAsync()");
             }
 
-            return await binding(computedResult).ConfigureAwait(false);
+            return await binding(input, computedResult).ConfigureAwait(false);
         });
     }
 }
