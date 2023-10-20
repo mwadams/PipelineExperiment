@@ -1,5 +1,6 @@
 ﻿namespace Sandbox;
 
+using Microsoft.AspNetCore.Http;
 using PipelineExperiment;
 using PipelineExperiment.Handlers;
 using PipelineExperiment.Pipelines;
@@ -17,24 +18,26 @@ public static class ExampleYarpPipeline
                 await Task.Delay(100).ConfigureAwait(false);
                 return ctx.Query.QueryString.HasValue
                             ? YarpPipeline.TerminateWith(new(400))
-                            : MessageHandlerPipelineInstance.Bind(
-                                result =>
-                                {
-                                    if (result.WasHandled(out string? message))
+                            : MessageHandlerPipelineInstance
+                                .BindInput((RequestTransformContext input) => input.Path)
+                                .Bind(
+                                    result =>
                                     {
-                                        if (message is string msg)
+                                        if (result.WasHandled(out string? message))
                                         {
-                                            ctx.HttpContext.Items["Message"] = msg;
-                                            return YarpPipeline.Continue();
+                                            if (message is string msg)
+                                            {
+                                                ctx.HttpContext.Items["Message"] = msg;
+                                                return YarpPipeline.Continue();
+                                            }
+                                            else
+                                            {
+                                                return YarpPipeline.TerminateWith(new(400));
+                                            }
                                         }
-                                        else
-                                        {
-                                            return YarpPipeline.TerminateWith(new(400));
-                                        }
-                                    }
 
-                                    return YarpPipeline.Continue();
-                                });
+                                        return YarpPipeline.Continue();
+                                    });
             }),
             YarpPipeline.MakeStep(ctx => ctx.HttpContext.Items["Message"] is string message
                         ? YarpPipeline.Continue()
@@ -50,12 +53,12 @@ public static class ExampleYarpPipeline
                         : YarpPipeline.Continue()
             );
 
-    private static PipelineStep<RequestTransformContext, HandlerResult<string?>> MessageHandlerPipelineInstance { get; } =
+    private static PipelineStep<PathString, HandlerResult<string?>> MessageHandlerPipelineInstance { get; } =
         MessageHandlerPipeline.Build(
-            ctx => ctx.Path == "/foo"
+            path => path == "/foo"
                         ? MessageHandlerPipeline.Handled("We're looking at a foo")
                         : MessageHandlerPipeline.NotHandled(),
-            ctx => ctx.Path == "/bar"
+            path => path == "/bar"
                         ? MessageHandlerPipeline.Handled(null)
                         : MessageHandlerPipeline.NotHandled());
 }
