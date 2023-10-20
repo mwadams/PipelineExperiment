@@ -47,13 +47,13 @@ public static class YarpPipeline
     public static YarpPipelineStep MakeStep(
         Func<RequestTransformContext, YarpPipelineStep> step)
     {
-        return new YarpPipelineStep(input => ValueTask.FromResult(step(input)));
+        return YarpPipelineStep.MakeStep(input => ValueTask.FromResult(step(input)));
     }
 
     public static YarpPipelineStep MakeStep(
         Func<RequestTransformContext, ValueTask<YarpPipelineStep>> step)
     {
-        return new YarpPipelineStep(step);
+        return YarpPipelineStep.MakeStep(step);
     }
 
     private static bool ShouldTerminatePipeline(YarpPipelineResult result)

@@ -29,7 +29,7 @@ public static class Pipeline
 
         // Never terminate
         var sequentialPipeline = new TerminatingPipeline<TInput, TOutput>(shouldTerminate, steps);
-        return new PipelineStep<TInput, TOutput>(sequentialPipeline.RunAsync);
+        return PipelineStep<TInput, TOutput>.MakeStep(sequentialPipeline.RunAsync);
     }
 
     public static PipelineStep<TInput, TOutput> Build<TInput, TOutput>(
@@ -56,19 +56,19 @@ public static class Pipeline
 
         // Never terminate
         var sequentialPipeline = Build(s => false, steps);
-        return new PipelineStep<TInput, TOutput>(sequentialPipeline.RunAsync);
+        return PipelineStep<TInput, TOutput>.MakeStep(sequentialPipeline.RunAsync);
     }
 
     public static PipelineStep<TInput, TOutput> MakeStep<TInput, TOutput>(
         Func<TInput, PipelineStep<TInput, TOutput>> step)
     {
-        return new PipelineStep<TInput, TOutput>(input => ValueTask.FromResult(step(input)));
+        return PipelineStep<TInput, TOutput>.MakeStep(input => ValueTask.FromResult(step(input)));
     }
 
     public static PipelineStep<TInput, TOutput> MakeStep<TInput, TOutput>(
         Func<TInput, ValueTask<PipelineStep<TInput, TOutput>>> step)
     {
-        return new PipelineStep<TInput, TOutput>(step);
+        return PipelineStep<TInput, TOutput>.MakeStep(step);
     }
 
     private readonly record struct TerminatingPipeline<TInput, TOutput>(Predicate<TOutput> ShouldTerminate, PipelineStep<TInput, TOutput>[] Steps)

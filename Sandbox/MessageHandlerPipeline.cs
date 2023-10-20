@@ -20,13 +20,13 @@ public static class MessageHandlerPipeline
     public static MessageHandlerPipelineStep MakeStep(
         Func<RequestTransformContext, MessageHandlerPipelineStep> step)
     {
-        return new MessageHandlerPipelineStep(input => ValueTask.FromResult(step(input)));
+        return MessageHandlerPipelineStep.MakeStep(input => ValueTask.FromResult(step(input)));
     }
 
     public static MessageHandlerPipelineStep MakeStep(
         Func<RequestTransformContext, ValueTask<MessageHandlerPipelineStep>> step)
     {
-        return new MessageHandlerPipelineStep(step);
+        return MessageHandlerPipelineStep.MakeStep(step);
     }
 
     public static MessageHandlerPipelineStep Handled(string result) =>

@@ -8,7 +8,7 @@ public readonly struct PipelineStep<TInput, TOutput>
     private readonly Func<TInput, ValueTask<PipelineStep<TInput, TOutput>>> computeResult;
     private readonly TOutput? computedResult;
 
-    public PipelineStep(Func<TInput, ValueTask<PipelineStep<TInput, TOutput>>> computeResult)
+    private PipelineStep(Func<TInput, ValueTask<PipelineStep<TInput, TOutput>>> computeResult)
     {
         this.computeResult = computeResult;
         computedResult = default;
@@ -26,6 +26,19 @@ public readonly struct PipelineStep<TInput, TOutput>
     {
         return new(result);
     }
+
+    public static PipelineStep<TInput, TOutput> MakeStep(
+        Func<TInput, PipelineStep<TInput, TOutput>> step)
+    {
+        return new PipelineStep<TInput, TOutput>(input => ValueTask.FromResult(step(input)));
+    }
+
+    public static PipelineStep<TInput, TOutput> MakeStep(
+        Func<TInput, ValueTask<PipelineStep<TInput, TOutput>>> step)
+    {
+        return new PipelineStep<TInput, TOutput>(step);
+    }
+
 
     public async ValueTask<PipelineStep<TInput, TOutput>> RunAsync(TInput input)
     {
