@@ -21,7 +21,8 @@ public static class ExampleYarpPipeline
                             ? YarpPipeline.TerminateWith(new(400))
                             : MessageHandlerPipelineInstance
                                 .BindInput(static (RequestTransformContext input) => input.Path)
-                                .Bind(
+                                .BindWith(
+                                    YarpPipeline.GetRequestTransformContext,
                                     static (input, result) =>
                                     {
                                         if (result.WasHandled(out string? message))

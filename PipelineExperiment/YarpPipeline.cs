@@ -8,6 +8,11 @@ using YarpPipelineStep = Pipelines.PipelineStep<Yarp.ReverseProxy.Transforms.Req
 
 public static class YarpPipeline
 {
+    // This is pointless right now because the RequestTransformContext would be available as an input anyway.
+    // But what if it wasn't...?
+    public static PipelineStep<RequestTransformContext, RequestTransformContext> GetRequestTransformContext { get; } =
+        PipelineStep<RequestTransformContext, RequestTransformContext>.ReturnContext();
+
     public static YarpPipelineStep Build(
         params Func<RequestTransformContext, YarpPipelineStep>[] steps)
     {
@@ -54,6 +59,14 @@ public static class YarpPipeline
         Func<RequestTransformContext, ValueTask<YarpPipelineStep>> step)
     {
         return YarpPipelineStep.MakeStep(step);
+    }
+
+    public static YarpPipelineStep BindWithRequestTransformContext<TOutput>(
+        this PipelineStep<RequestTransformContext, TOutput> step,
+        Func<RequestTransformContext, TOutput, YarpPipelineStep> binding)
+    {
+        step.BindWith(YarpPipeline.GetRequestTransformContext, binding);
+        return step.Bind(binding);
     }
 
     private static bool ShouldTerminatePipeline(YarpPipelineResult result)
