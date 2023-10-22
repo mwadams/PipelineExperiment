@@ -1,35 +1,37 @@
 ﻿namespace PipelineExperiment;
 
-using YarpPipelineStep = Pipelines.PipelineStep<Yarp.ReverseProxy.Transforms.RequestTransformContext, YarpPipelineResult>;
+using Yarp.ReverseProxy.Transforms;
 
-// The result of a YARP processing pipeline step
-public readonly struct YarpPipelineResult
+public readonly struct YarpPipelineState
 {
     private readonly NonForwardedResponseDetails responseDetails;
     private readonly TransformState pipelineState;
 
-    private YarpPipelineResult(NonForwardedResponseDetails responseDetails, TransformState pipelineState)
+    private YarpPipelineState(RequestTransformContext requestTransformContext, NonForwardedResponseDetails responseDetails, TransformState pipelineState)
     {
+        this.RequestTransformContext = requestTransformContext;
         this.responseDetails = responseDetails;
         this.pipelineState = pipelineState;
     }
 
-    internal static YarpPipelineStep TerminateWith(NonForwardedResponseDetails responseDetails)
+    public static YarpPipelineState For(RequestTransformContext requestTransformContext)
     {
-        return YarpPipelineStep.FromResult(
-            new(responseDetails, TransformState.Terminate));
+        return new(requestTransformContext, default, TransformState.Continue);
     }
 
-    internal static YarpPipelineStep TerminateAndForward()
+    public YarpPipelineState TerminateWith(NonForwardedResponseDetails responseDetails)
     {
-        return YarpPipelineStep.FromResult(
-            new(default, TransformState.TerminateAndForward));
+        return new(this.RequestTransformContext, responseDetails, TransformState.Terminate);
     }
 
-    internal static YarpPipelineStep Continue()
+    public YarpPipelineState TerminateAndForward()
     {
-        return YarpPipelineStep.FromResult(
-            new(default, TransformState.Continue));
+        return new(this.RequestTransformContext, default, TransformState.TerminateAndForward);
+    }
+
+    public YarpPipelineState Continue()
+    {
+        return new(this.RequestTransformContext, default, TransformState.Continue);
     }
 
     /// <summary>
@@ -37,6 +39,8 @@ public readonly struct YarpPipelineResult
     /// the pipeline
     /// </summary>
     internal bool ShouldTerminatePipeline => pipelineState != TransformState.Continue;
+
+    public RequestTransformContext RequestTransformContext { get; }
 
     /// <summary>
     /// Used by whoever executed the pipeline to determine whether we should forward the result,

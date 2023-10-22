@@ -8,7 +8,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Yarp.ReverseProxy" Version="2.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\PipelineExperiment\PipelineExperiment.csproj" />
+    <ProjectReference Include="..\YarpPipeline\YarpPipeline.csproj" />
   </ItemGroup>
 
 </Project>

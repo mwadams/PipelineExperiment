@@ -10,21 +10,14 @@ foreach (var path in paths)
     Console.WriteLine($"Handling: {path}");
     RequestTransformContext ctx = new() { HttpContext = new DefaultHttpContext() { Request = { Path = path } }, Path = path };
 
-    var computedResult = await ExampleYarpPipeline.Instance.RunAsync(ctx).ConfigureAwait(false);
+    var result = await ExampleYarpPipeline.Instance(YarpPipelineState.For(ctx)).ConfigureAwait(false);
 
-    if (computedResult.TryGetResult(out YarpPipelineResult result))
+    if (result.ShouldForward(out NonForwardedResponseDetails responseDetails))
     {
-        if (result.ShouldForward(out NonForwardedResponseDetails responseDetails))
-        {
-            Console.WriteLine($"Forwarding, message is: {ctx.HttpContext.Items["Message"] ?? "not set"}");
-        }
-        else
-        {
-            Console.WriteLine($"Not forwarding: Status Code {responseDetails.StatusCode}");
-        }
+        Console.WriteLine($"Forwarding, message is: {ctx.HttpContext.Items["Message"] ?? "not set"}");
     }
     else
     {
-        Console.WriteLine("Shouldn't get here.");
+        Console.WriteLine($"Not forwarding: Status Code {responseDetails.StatusCode}");
     }
 }
