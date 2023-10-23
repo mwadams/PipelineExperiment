@@ -79,39 +79,39 @@ public static class PipelineStepExtensions
             (TState state, (TState, TValue1, TValue2, TValue3) result) => ValueTask.FromResult(result.Item1));
     }
 
-    public static PipelineStep<TBoundState> Bind<TState, TBoundState>(
-        this PipelineStep<TState> step,
-        Func<TBoundState, TState> wrap,
-        Func<TBoundState, TState, TBoundState> unwrap)
+    public static PipelineStep<TState> Bind<TInnerState, TState>(
+        this PipelineStep<TInnerState> step,
+        Func<TState, TInnerState> wrap,
+        Func<TState, TInnerState, TState> unwrap)
     {
-        return async boundState =>
+        return async state =>
         {
-            var result = await step(wrap(boundState)).ConfigureAwait(false);
-            return unwrap(boundState, result);
+            var innerState = await step(wrap(state)).ConfigureAwait(false);
+            return unwrap(state, innerState);
         };
     }
 
-    public static PipelineStep<TBoundState> Bind<TState, TBoundState>(
-        this PipelineStep<TState> step,
-        Func<TBoundState, ValueTask<TState>> wrap,
-        Func<TBoundState, TState, TBoundState> unwrap)
+    public static PipelineStep<TState> Bind<TInnerState, TState>(
+        this PipelineStep<TInnerState> step,
+        Func<TState, ValueTask<TInnerState>> wrap,
+        Func<TState, TInnerState, TState> unwrap)
     {
-        return async boundState =>
+        return async state =>
         {
-            var result = await step(await wrap(boundState).ConfigureAwait(false)).ConfigureAwait(false);
-            return unwrap(boundState, result);
+            var innerState = await step(await wrap(state).ConfigureAwait(false)).ConfigureAwait(false);
+            return unwrap(state, innerState);
         };
     }
 
-    public static PipelineStep<TBoundState> Bind<TState, TBoundState>(
-        this PipelineStep<TState> step,
-        Func<TBoundState, ValueTask<TState>> wrap,
-        Func<TBoundState, TState, ValueTask<TBoundState>> unwrap)
+    public static PipelineStep<TState> Bind<TInnerState, TState>(
+        this PipelineStep<TInnerState> step,
+        Func<TState, ValueTask<TInnerState>> wrap,
+        Func<TState, TInnerState, ValueTask<TState>> unwrap)
     {
-        return async boundState =>
+        return async state =>
         {
-            var result = await step(await wrap(boundState).ConfigureAwait(false)).ConfigureAwait(false);
-            return await unwrap(boundState, result).ConfigureAwait(false);
+            var innerState = await step(await wrap(state).ConfigureAwait(false)).ConfigureAwait(false);
+            return await unwrap(state, innerState).ConfigureAwait(false);
         };
     }
 
@@ -126,15 +126,15 @@ public static class PipelineStepExtensions
         };
     }
 
-    public static PipelineStep<TBoundState> Bind<TState, TBoundState>(
-        this PipelineStep<TState> step,
-        Func<TBoundState, TState> wrap,
-        Func<TBoundState, TState, ValueTask<TBoundState>> unwrap)
+    public static PipelineStep<TState> Bind<TInnerState, TState>(
+        this PipelineStep<TInnerState> step,
+        Func<TState, TInnerState> wrap,
+        Func<TState, TInnerState, ValueTask<TState>> unwrap)
     {
-        return async boundState =>
+        return async state =>
         {
-            var result = await step(wrap(boundState)).ConfigureAwait(false);
-            return await unwrap(boundState, result).ConfigureAwait(false);
+            var innerState = await step(wrap(state)).ConfigureAwait(false);
+            return await unwrap(state, innerState).ConfigureAwait(false);
         };
     }
 

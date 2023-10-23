@@ -28,24 +28,24 @@ public static class ExampleYarpPipeline
     private static readonly PipelineStep<YarpPipelineState> AddMessageToHttpContext =
         MessageHandlerPipelineInstance
             .Bind(
-                wrap: static (YarpPipelineState inputState) => HandlerState<PathString, string?>.For(inputState.RequestTransformContext.Path),
-                unwrap: static async (inputState, outputState) =>
+                wrap: static (YarpPipelineState state) => HandlerState<PathString, string?>.For(state.RequestTransformContext.Path),
+                unwrap: static async (state, innerState) =>
                 {
                     await Task.Delay(100).ConfigureAwait(false);
-                    if (outputState.WasHandled(out string? message))
+                    if (innerState.WasHandled(out string? message))
                     {
                         if (message is string msg)
                         {
-                            inputState.RequestTransformContext.HttpContext.Items["Message"] = msg;
-                            return inputState.Continue();
+                            state.RequestTransformContext.HttpContext.Items["Message"] = msg;
+                            return state.Continue();
                         }
                         else
                         {
-                            return inputState.TerminateWith(new(400));
+                            return state.TerminateWith(new(400));
                         }
                     }
 
-                    return inputState.Continue();
+                    return state.Continue();
                 });
 
     private static readonly Func<YarpPipelineState, PipelineStep<YarpPipelineState>> ChooseMessageContextHandler =
