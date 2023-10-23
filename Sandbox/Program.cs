@@ -5,12 +5,12 @@ using Yarp.ReverseProxy.Transforms;
 
 string[] paths = ["/foo", "/bar", "/fizz", "/", "/baz"];
 
-foreach (var path in paths)
+foreach (string path in paths)
 {
     Console.WriteLine($"Handling: {path}");
     RequestTransformContext ctx = new() { HttpContext = new DefaultHttpContext() { Request = { Path = path } }, Path = path };
 
-    var result = await ExampleYarpPipeline.Instance(YarpPipelineState.For(ctx)).ConfigureAwait(false);
+    YarpPipelineState result = await ExampleYarpPipeline.Instance(YarpPipelineState.For(ctx)).ConfigureAwait(false);
 
     if (result.ShouldForward(out NonForwardedResponseDetails responseDetails))
     {
