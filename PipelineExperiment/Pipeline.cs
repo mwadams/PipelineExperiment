@@ -9,25 +9,28 @@ namespace PipelineExperiment;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Each step operates on the instance of the TState, and returns an instance of the TState. That result is fed as the input
+/// Each step operates on the instance of the <c>TState</c>, and returns an instance of the <c>TState</c>. That result is fed as the input
 /// to the next step in the pipeline.
 /// </para>
 /// <para>
-/// It is usual for the TState to be immutable, but side-effects are permitted.
+/// It is usual for the <c>TState</c> to be an immutable type, but side-effects are permitted.
 /// </para>
 /// <para>
-/// A function that returns an instance of a step is called an <b>operator</b>. These operators
-/// allow you to build more complex logic into your pipeline at design time, that are resolved
-/// when the pipeline is executed.
+/// A function that returns an instance of a step, rather than the result of a step, is called an <b>operator</b>. These operators
+/// implement common patterns, that are resolved when the pipeline is executed.
 /// </para>
 /// <para>
-/// The underlying <see cref="PipelineStep{TState}"/> is an intrinsically asynchronous process, which
+/// (For the mathematically minded, we use "operator" broadly in the sense of a function that maps one function space to another,
+/// rather than the dotnet <c>operator</c>s, such as addition, subtraction and instance type conversion).
+/// </para>
+/// <para>
+/// The <see cref="PipelineStep{TState}"/> is an asynchronous function, which
 /// returns a <see cref="ValueTask{TState}"/>.
 /// </para>
 /// <para>
 /// For purely synchronous pipelines, you can use the overloads <see cref="Build{TState}(PipelineExperiment.SyncPipelineStep{TState}[])"/>
 /// and <see cref="Build{TState}(Predicate{TState}, PipelineExperiment.SyncPipelineStep{TState}[])"/> that take a <see cref="SyncPipelineStep{TState}"/>
-/// and optimize.
+/// and optimize for that case.
 /// </para>
 /// <para>
 /// For mixed sync and async pipelines, you should wrap your <see cref="SyncPipelineStep{TState}"/> instances in a call to
@@ -47,7 +50,7 @@ public static class Pipeline
     }
 
     /// <summary>
-    /// An operator that provides a <see cref="PipelineStep{TState}"/> which executes a series of steps in order as a pipeline.
+    /// An operator that provides a <see cref="PipelineStep{TState}"/> which executes a series of steps in order.
     /// </summary>
     /// <typeparam name="TState">The type of the state for the pipeline.</typeparam>
     /// <param name="steps">The steps to be executed, in order.</param>
@@ -74,7 +77,7 @@ public static class Pipeline
     }
 
     /// <summary>
-    /// An operator that provides a <see cref="PipelineStep{TState}"/> which executes a series of steps in order as a pipeline.
+    /// An operator that provides a <see cref="PipelineStep{TState}"/> which executes a series of steps in order.
     /// </summary>
     /// <typeparam name="TState">The type of the state for the pipeline.</typeparam>
     /// <param name="steps">The steps to be executed, in order. In this overload, they are all synchronous functions.</param>
@@ -101,7 +104,7 @@ public static class Pipeline
     }
 
     /// <summary>
-    /// An operator that provides a <see cref="PipelineStep{TState}"/> which executes a series of steps in order as a pipeline, with
+    /// An operator that provides a <see cref="PipelineStep{TState}"/> which executes a series of steps in order, with
     /// the ability to terminate early if the <paramref name="shouldTerminate"/> predicate returns true.
     /// </summary>
     /// <typeparam name="TState">The type of the state for the pipeline.</typeparam>
@@ -113,7 +116,7 @@ public static class Pipeline
     /// When you build and execute the <see cref="Pipeline"/>, you pass it an initial instance of the <typeparamref name="TState"/>.
     /// </para>
     /// <para>The state is passed to each <see cref="PipelineStep{TState}"/> in turn until one returns an instance
-    /// of the <typeparamref name="TState"/> for which the <paramref name="shouldTerminate"/> predicate returns true.
+    /// of the <typeparamref name="TState"/> for which the <paramref name="shouldTerminate"/> predicate returns <see langword="true"/>.
     /// At this point the pipeline will be terminated, and the resulting state returned.
     /// </para>
     /// </remarks>
@@ -136,7 +139,7 @@ public static class Pipeline
     }
 
     /// <summary>
-    /// An operator that provides a <see cref="PipelineStep{TState}"/> which executes a series of steps in order as a pipeline, with
+    /// An operator that provides a <see cref="PipelineStep{TState}"/> which executes a series of steps in order, with
     /// the ability to terminate early if the <paramref name="shouldTerminate"/> predicate returns true.
     /// </summary>
     /// <typeparam name="TState">The type of the state for the pipeline.</typeparam>
@@ -148,7 +151,7 @@ public static class Pipeline
     /// When you build and execute the <see cref="Pipeline"/>, you pass it an initial instance of the <typeparamref name="TState"/>.
     /// </para>
     /// <para>The state is passed to each <see cref="PipelineStep{TState}"/> in turn until one returns an instance
-    /// of the <typeparamref name="TState"/> for which the <paramref name="shouldTerminate"/> predicate returns true.
+    /// of the <typeparamref name="TState"/> for which the <paramref name="shouldTerminate"/> predicate returns <see langword="true"/>.
     /// At this point the pipeline will be terminated, and the resulting state returned.
     /// </para>
     /// </remarks>
