@@ -58,12 +58,8 @@ public static class ExampleYarpPipeline
                                 ? state => ValueTask.FromResult(state.TerminateWith(new(400)))
                                 : AddMessageToHttpContext;
 
-    private static readonly Func<YarpPipelineState, Exception, ValueTask<YarpPipelineState>> CatchPipelineException =
-        static (state, exception) =>
-        {
-            // Terminate the pipeline on exception with a 500 response.
-            return ValueTask.FromResult(state.PermanentFailure(new("Unable to execute the pipeline.", exception)));
-        };
+    private static readonly Func<YarpPipelineState, Exception, YarpPipelineState> CatchPipelineException =
+        static (state, exception) => state.TransientFailure(new("Unable to execute the pipeline.", exception));
 
     /// <summary>
     /// Gets an instance of an example yarp pipeline handler.
@@ -78,8 +74,15 @@ public static class ExampleYarpPipeline
                         ? state.Continue()
                         : state.TerminateWith(new(404))))
         .Catch(CatchPipelineException)
+        .Retry(
+            static state => state.ExecutionStatus == PipelineStepStatus.TransientFailure && state.FailureCount < 5, // This is doing a simple count, but you could layer policy based on state.TryGetErrorDetails()
+            async state =>
+            {
+                Console.WriteLine("Retrying...");                
+                await Task.Delay(0).ConfigureAwait(false); // You could do a back off using state.FailureCount, or whatever!
+                return state;
+            })
         .OnError(state => state.TerminateWith(new(500)));
-
 
     /// <summary>
     /// Gets an instance of an example yarp pipeline handler.
@@ -99,5 +102,13 @@ public static class ExampleYarpPipeline
                         ? state.Continue()
                         : state.TerminateWith(new(404))))
         .Catch(CatchPipelineException)
+        .Retry(
+            static state => state.FailureCount < 5, // This is doing a simple count, but you could layer policy based on state.TryGetErrorDetails()
+            async state =>
+            {
+                Console.WriteLine("Retrying...");
+                await Task.Delay(0).ConfigureAwait(false); // You could do a back off using state.FailureCount, or whatever!
+                return state;
+            })
         .OnError(state => state.TerminateWith(new(500)));
 }

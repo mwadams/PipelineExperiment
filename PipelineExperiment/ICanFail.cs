@@ -24,11 +24,22 @@ public interface ICanFail<TState, TError>
     PipelineStepStatus ExecutionStatus { get; }
 
     /// <summary>
+    /// Gets the number of times the operation has been tried and failed.
+    /// </summary>
+    int FailureCount { get; }
+
+    /// <summary>
     /// Try to get the error details from the state.
     /// </summary>
     /// <param name="errorDetails">The error details, if the execution status does not indicate success.</param>
     /// <returns><see langword="true"/> if the execution status does not indicate success.</returns>
     bool TryGetErrorDetails([NotNullWhen(true)] out TError errorDetails);
+
+    /// <summary>
+    /// Returns the state with the failure count set to zero.
+    /// </summary>
+    /// <returns>The updated state.</returns>
+    TState ResetFailureState();
 
     /// <summary>
     /// Returns the state with the execution status set to

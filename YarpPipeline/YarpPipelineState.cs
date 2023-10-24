@@ -22,13 +22,14 @@ public readonly struct YarpPipelineState : ICanFail<YarpPipelineState, YarpPipel
     private readonly TransformState pipelineState;
     private readonly YarpPipelineError errorDetails;
 
-    private YarpPipelineState(RequestTransformContext requestTransformContext, NonForwardedResponseDetails responseDetails, TransformState pipelineState, PipelineStepStatus executionStatus, YarpPipelineError errorDetails)
+    private YarpPipelineState(RequestTransformContext requestTransformContext, NonForwardedResponseDetails responseDetails, TransformState pipelineState, PipelineStepStatus executionStatus, YarpPipelineError errorDetails, int failureCount)
     {
         this.RequestTransformContext = requestTransformContext;
         this.responseDetails = responseDetails;
         this.pipelineState = pipelineState;
         this.errorDetails = errorDetails;
         this.ExecutionStatus = executionStatus;
+        this.FailureCount = failureCount;
     }
 
     private enum TransformState
@@ -46,6 +47,9 @@ public readonly struct YarpPipelineState : ICanFail<YarpPipelineState, YarpPipel
     /// <inheritdoc/>
     public PipelineStepStatus ExecutionStatus { get; }
 
+    /// <inheritdoc/>
+    public int FailureCount { get; }
+
     /// <summary>
     /// Gets a value indicating whether the pipeline should be terminated. This is used by the
     /// terminate predicate for the <see cref="YarpPipeline"/>.
@@ -61,7 +65,7 @@ public readonly struct YarpPipelineState : ICanFail<YarpPipelineState, YarpPipel
     /// <returns>The initialized instance.</returns>
     public static YarpPipelineState For(RequestTransformContext requestTransformContext)
     {
-        return new(requestTransformContext, default, TransformState.Continue, default, default);
+        return new(requestTransformContext, default, TransformState.Continue, default, default, 0);
     }
 
     /// <summary>
@@ -72,7 +76,7 @@ public readonly struct YarpPipelineState : ICanFail<YarpPipelineState, YarpPipel
     /// <returns>The terminating <see cref="YarpPipelineState"/>.</returns>
     public YarpPipelineState TerminateWith(NonForwardedResponseDetails responseDetails)
     {
-        return new(this.RequestTransformContext, responseDetails, TransformState.Terminate, this.ExecutionStatus, this.errorDetails);
+        return new(this.RequestTransformContext, responseDetails, TransformState.Terminate, this.ExecutionStatus, this.errorDetails, this.FailureCount);
     }
 
     /// <summary>
@@ -82,7 +86,7 @@ public readonly struct YarpPipelineState : ICanFail<YarpPipelineState, YarpPipel
     /// <returns>The terminating <see cref="YarpPipelineState"/>.</returns>
     public YarpPipelineState TerminateAndForward()
     {
-        return new(this.RequestTransformContext, default, TransformState.TerminateAndForward, this.ExecutionStatus, this.errorDetails);
+        return new(this.RequestTransformContext, default, TransformState.TerminateAndForward, this.ExecutionStatus, this.errorDetails, this.FailureCount);
     }
 
     /// <summary>
@@ -97,7 +101,7 @@ public readonly struct YarpPipelineState : ICanFail<YarpPipelineState, YarpPipel
     /// </remarks>
     public YarpPipelineState Continue()
     {
-        return new(this.RequestTransformContext, default, TransformState.Continue, this.ExecutionStatus, this.errorDetails);
+        return new(this.RequestTransformContext, default, TransformState.Continue, this.ExecutionStatus, this.errorDetails, this.FailureCount);
     }
 
     /// <summary>
@@ -134,7 +138,8 @@ public readonly struct YarpPipelineState : ICanFail<YarpPipelineState, YarpPipel
             this.responseDetails,
             this.pipelineState,
             PipelineStepStatus.PermanentFailure,
-            errorDetails);
+            errorDetails,
+            this.FailureCount + 1);
     }
 
     /// <inheritdoc/>
@@ -145,7 +150,8 @@ public readonly struct YarpPipelineState : ICanFail<YarpPipelineState, YarpPipel
             this.responseDetails,
             this.pipelineState,
             PipelineStepStatus.TransientFailure,
-            errorDetails);
+            errorDetails,
+            this.FailureCount + 1);
     }
 
     /// <inheritdoc/>
@@ -156,6 +162,19 @@ public readonly struct YarpPipelineState : ICanFail<YarpPipelineState, YarpPipel
             this.responseDetails,
             this.pipelineState,
             PipelineStepStatus.Success,
-            default);
+            default,
+            this.FailureCount);
+    }
+
+    /// <inheritdoc/>
+    public YarpPipelineState ResetFailureState()
+    {
+        return new YarpPipelineState(
+            this.RequestTransformContext,
+            this.responseDetails,
+            this.pipelineState,
+            PipelineStepStatus.Success,
+            default,
+            0);
     }
 }

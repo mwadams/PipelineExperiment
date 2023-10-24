@@ -43,6 +43,37 @@ public static class PipelineStepExtensions
     }
 
     /// <summary>
+    /// An operator which provides a step that catches an exception thrown by a step, and passes it to a handler.
+    /// </summary>
+    /// <typeparam name="TState">The type of the state.</typeparam>
+    /// <typeparam name="TException">The type of the exception.</typeparam>
+    /// <param name="step">The step to wrap with exception handling.</param>
+    /// <param name="exceptionHandler">The exception handler, which takes the input state and exception, and returns a resulting state instance.</param>
+    /// <returns>A step which wraps the input step, and provides the exception handling capability.</returns>
+    /// <remarks>
+    /// This is commonly used in conjunction with the termination capability of a <see cref="Pipeline"/>, and/or a
+    /// <see cref="ICanFail{TState, TError}"/> step with permanent or transient failure handling via
+    /// operators like <see cref="Retry{TState, TError}(PipelineStep{TState}, Predicate{TState}, PipelineStep{TState}?)"/> and
+    /// <see cref="OnError{TState, TError}(PipelineStep{TState}, PipelineStep{TState})"/>.
+    /// </remarks>
+    public static PipelineStep<TState> Catch<TState, TException>(this PipelineStep<TState> step, Func<TState, TException, TState> exceptionHandler)
+        where TState : struct
+        where TException : Exception
+    {
+        return async state =>
+        {
+            try
+            {
+                return await step(state).ConfigureAwait(false);
+            }
+            catch (TException ex)
+            {
+                return exceptionHandler(state, ex);
+            }
+        };
+    }
+
+    /// <summary>
     /// An operator which provides the ability to retry a step which might fail.
     /// </summary>
     /// <typeparam name="TState">The type of the state.</typeparam>
@@ -59,7 +90,7 @@ public static class PipelineStepExtensions
     {
         return async state =>
         {
-            TState currentState = state;
+            TState currentState = state.ResetFailureState();
 
             while (true)
             {
