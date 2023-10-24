@@ -11,7 +11,8 @@ namespace PipelineExperiment;
 /// <typeparam name="TState">The type of the state.</typeparam>
 /// <param name="state">The input state.</param>
 /// <returns>A <see cref="ValueTask{TState}"/> which, when resolved, provides the updated state.</returns>
-public delegate ValueTask<TState> PipelineStep<TState>(TState state);
+public delegate ValueTask<TState> PipelineStep<TState>(TState state)
+    where TState : struct;
 
 /// <summary>
 /// An asynchronous step in a <see cref="Pipeline"/>, that operates on an instance
@@ -20,4 +21,5 @@ public delegate ValueTask<TState> PipelineStep<TState>(TState state);
 /// <typeparam name="TState">The type of the state.</typeparam>
 /// <param name="state">The input state.</param>
 /// <returns>A <see cref="ValueTask{TState}"/> which, when resolved, provides the updated state.</returns>
-public delegate TState SyncPipelineStep<TState>(TState state);
+public delegate TState SyncPipelineStep<TState>(TState state)
+    where TState : struct;

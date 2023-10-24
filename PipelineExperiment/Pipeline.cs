@@ -45,6 +45,7 @@ public static class Pipeline
     /// <typeparam name="TState">The type of the state.</typeparam>
     /// <returns>A pipeline step which, when executed, provides the current version of the state.</returns>
     public static PipelineStep<TState> Current<TState>()
+        where TState : struct
     {
         return static state => ValueTask.FromResult(state);
     }
@@ -64,6 +65,7 @@ public static class Pipeline
     /// </para>
     /// </remarks>
     public static PipelineStep<TState> Build<TState>(params PipelineStep<TState>[] steps)
+        where TState : struct
     {
         return async state =>
         {
@@ -92,6 +94,7 @@ public static class Pipeline
     /// </para>
     /// </remarks>
     public static PipelineStep<TState> Build<TState>(params SyncPipelineStep<TState>[] steps)
+        where TState : struct
     {
         return state =>
         {
@@ -123,6 +126,7 @@ public static class Pipeline
     /// </para>
     /// </remarks>
     public static PipelineStep<TState> Build<TState>(Predicate<TState> shouldTerminate, params PipelineStep<TState>[] steps)
+        where TState : struct
     {
         return async state =>
         {
@@ -158,6 +162,7 @@ public static class Pipeline
     /// </para>
     /// </remarks>
     public static PipelineStep<TState> Build<TState>(Predicate<TState> shouldTerminate, params SyncPipelineStep<TState>[] steps)
+        where TState : struct
     {
         return state =>
         {

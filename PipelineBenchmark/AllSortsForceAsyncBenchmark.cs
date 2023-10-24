@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+#pragma warning disable CA1822 // Mark members as static - not helpful in benchmarks
+
 using BenchmarkDotNet.Attributes;
 using Microsoft.AspNetCore.Http;
 using PipelineExample;
