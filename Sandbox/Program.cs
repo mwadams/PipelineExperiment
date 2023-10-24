@@ -3,7 +3,7 @@ using PipelineExample;
 using PipelineExperiment;
 using Yarp.ReverseProxy.Transforms;
 
-string[] paths = ["/foo", "/bar", "/fizz", "/", "/baz"];
+string[] paths = ["/foo", "/bar", "/fizz", "/buzz", "/", "/baz"];
 
 foreach (string path in paths)
 {

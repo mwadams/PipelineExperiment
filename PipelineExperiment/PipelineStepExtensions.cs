@@ -104,6 +104,32 @@ public static class PipelineStepExtensions
     }
 
     /// <summary>
+    /// An operator which provides the ability to choose a step to run if the bound step fails.
+    /// </summary>
+    /// <typeparam name="TState">The type of the state.</typeparam>
+    /// <typeparam name="TError">The type of the error details.</typeparam>
+    /// <param name="step">The step to execute.</param>
+    /// <param name="onError">The step to execute if the step fails.</param>
+    /// <returns>A <see cref="PipelineStep{TState}"/> which, when executed, will execute the step, and, if an error occurs,
+    /// execute the error step before returning the final result.</returns>
+    public static PipelineStep<TState> OnError<TState, TError>(
+        this PipelineStep<TState> step,
+        SyncPipelineStep<TState> onError)
+        where TState : struct, ICanFail<TState, TError>
+        where TError : struct
+    {
+        return step.Bind(state =>
+        {
+            if (state.ExecutionStatus != PipelineStepStatus.Success)
+            {
+                return ValueTask.FromResult(onError(state));
+            }
+
+            return ValueTask.FromResult(state);
+        });
+    }
+
+    /// <summary>
     /// An operator that binds the output of one <see cref="PipelineStep{TState}"/> to another <see cref="PipelineStep{TState}"/>
     /// provided by a <paramref name="selector"/> function.
     /// </summary>

@@ -28,7 +28,7 @@ public interface ICanFail<TState, TError>
     /// </summary>
     /// <param name="errorDetails">The error details, if the execution status does not indicate success.</param>
     /// <returns><see langword="true"/> if the execution status does not indicate success.</returns>
-    bool TryGetErrorDetails([NotNullWhen(true)] TError errorDetails);
+    bool TryGetErrorDetails([NotNullWhen(true)] out TError errorDetails);
 
     /// <summary>
     /// Returns the state with the execution status set to

@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using Yarp.ReverseProxy.Transforms;
 
 namespace PipelineExperiment;
@@ -15,16 +16,19 @@ namespace PipelineExperiment;
 /// the <see cref="RequestTransformContext"/> on to YARP for forwarding to the appropriate endpoint, or
 /// <see cref="TerminateWith(NonForwardedResponseDetails)"/> a specific response code, headers and/or body.
 /// </remarks>
-public readonly struct YarpPipelineState
+public readonly struct YarpPipelineState : ICanFail<YarpPipelineState, YarpPipelineError>
 {
     private readonly NonForwardedResponseDetails responseDetails;
     private readonly TransformState pipelineState;
+    private readonly YarpPipelineError errorDetails;
 
-    private YarpPipelineState(RequestTransformContext requestTransformContext, NonForwardedResponseDetails responseDetails, TransformState pipelineState)
+    private YarpPipelineState(RequestTransformContext requestTransformContext, NonForwardedResponseDetails responseDetails, TransformState pipelineState, PipelineStepStatus executionStatus, YarpPipelineError errorDetails)
     {
         this.RequestTransformContext = requestTransformContext;
         this.responseDetails = responseDetails;
         this.pipelineState = pipelineState;
+        this.errorDetails = errorDetails;
+        this.ExecutionStatus = executionStatus;
     }
 
     private enum TransformState
@@ -38,6 +42,9 @@ public readonly struct YarpPipelineState
     /// Gets the <see cref="RequestTransformContext"/> for the current request.
     /// </summary>
     public RequestTransformContext RequestTransformContext { get; }
+
+    /// <inheritdoc/>
+    public PipelineStepStatus ExecutionStatus { get; }
 
     /// <summary>
     /// Gets a value indicating whether the pipeline should be terminated. This is used by the
@@ -54,7 +61,7 @@ public readonly struct YarpPipelineState
     /// <returns>The initialized instance.</returns>
     public static YarpPipelineState For(RequestTransformContext requestTransformContext)
     {
-        return new(requestTransformContext, default, TransformState.Continue);
+        return new(requestTransformContext, default, TransformState.Continue, default, default);
     }
 
     /// <summary>
@@ -65,7 +72,7 @@ public readonly struct YarpPipelineState
     /// <returns>The terminating <see cref="YarpPipelineState"/>.</returns>
     public YarpPipelineState TerminateWith(NonForwardedResponseDetails responseDetails)
     {
-        return new(this.RequestTransformContext, responseDetails, TransformState.Terminate);
+        return new(this.RequestTransformContext, responseDetails, TransformState.Terminate, this.ExecutionStatus, this.errorDetails);
     }
 
     /// <summary>
@@ -75,7 +82,7 @@ public readonly struct YarpPipelineState
     /// <returns>The terminating <see cref="YarpPipelineState"/>.</returns>
     public YarpPipelineState TerminateAndForward()
     {
-        return new(this.RequestTransformContext, default, TransformState.TerminateAndForward);
+        return new(this.RequestTransformContext, default, TransformState.TerminateAndForward, this.ExecutionStatus, this.errorDetails);
     }
 
     /// <summary>
@@ -90,7 +97,7 @@ public readonly struct YarpPipelineState
     /// </remarks>
     public YarpPipelineState Continue()
     {
-        return new(this.RequestTransformContext, default, TransformState.Continue);
+        return new(this.RequestTransformContext, default, TransformState.Continue, this.ExecutionStatus, this.errorDetails);
     }
 
     /// <summary>
@@ -110,5 +117,45 @@ public readonly struct YarpPipelineState
 
         responseDetails = this.responseDetails;
         return false;
+    }
+
+    /// <inheritdoc/>
+    public bool TryGetErrorDetails([NotNullWhen(true)] out YarpPipelineError errorDetails)
+    {
+        errorDetails = this.errorDetails;
+        return this.ExecutionStatus != PipelineStepStatus.Success;
+    }
+
+    /// <inheritdoc/>
+    public YarpPipelineState PermanentFailure(YarpPipelineError errorDetails)
+    {
+        return new YarpPipelineState(
+            this.RequestTransformContext,
+            this.responseDetails,
+            this.pipelineState,
+            PipelineStepStatus.PermanentFailure,
+            errorDetails);
+    }
+
+    /// <inheritdoc/>
+    public YarpPipelineState TransientFailure(YarpPipelineError errorDetails)
+    {
+        return new YarpPipelineState(
+            this.RequestTransformContext,
+            this.responseDetails,
+            this.pipelineState,
+            PipelineStepStatus.TransientFailure,
+            errorDetails);
+    }
+
+    /// <inheritdoc/>
+    public YarpPipelineState Success()
+    {
+        return new YarpPipelineState(
+            this.RequestTransformContext,
+            this.responseDetails,
+            this.pipelineState,
+            PipelineStepStatus.Success,
+            default);
     }
 }

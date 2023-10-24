@@ -19,7 +19,7 @@ public static class ExampleYarpPipeline
                     ? state.TerminateAndForward()
                     : state.Continue(),
         static state => state.RequestTransformContext.Path == "/buzz"
-                    ? state.TerminateAndForward()
+                    ? throw new InvalidOperationException("Something's gone wrong!")
                     : state.Continue());
 
     private static readonly PipelineStep<HandlerState<PathString, string?>> MessageHandlerPipelineInstance =
@@ -58,6 +58,13 @@ public static class ExampleYarpPipeline
                                 ? state => ValueTask.FromResult(state.TerminateWith(new(400)))
                                 : AddMessageToHttpContext;
 
+    private static readonly Func<YarpPipelineState, Exception, ValueTask<YarpPipelineState>> CatchPipelineException =
+        static (state, exception) =>
+        {
+            // Terminate the pipeline on exception with a 500 response.
+            return ValueTask.FromResult(state.PermanentFailure(new("Unable to execute the pipeline.", exception)));
+        };
+
     /// <summary>
     /// Gets an instance of an example yarp pipeline handler.
     /// </summary>
@@ -69,7 +76,10 @@ public static class ExampleYarpPipeline
             YarpPipeline.Current.Choose(ChooseMessageContextHandler), // But we prefer this style where we hide away the state
             static state => ValueTask.FromResult(state.RequestTransformContext.HttpContext.Items["Message"] is string message
                         ? state.Continue()
-                        : state.TerminateWith(new(404))));
+                        : state.TerminateWith(new(404))))
+        .Catch(CatchPipelineException)
+        .OnError(state => state.TerminateWith(new(500)));
+
 
     /// <summary>
     /// Gets an instance of an example yarp pipeline handler.
@@ -87,5 +97,7 @@ public static class ExampleYarpPipeline
             YarpPipeline.Current.Choose(ChooseMessageContextHandler), // But we prefer this style where we hide away the state
             static state => ValueTask.FromResult(state.RequestTransformContext.HttpContext.Items["Message"] is string message
                         ? state.Continue()
-                        : state.TerminateWith(new(404))));
+                        : state.TerminateWith(new(404))))
+        .Catch(CatchPipelineException)
+        .OnError(state => state.TerminateWith(new(500)));
 }
