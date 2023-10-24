@@ -8,8 +8,8 @@ namespace PipelineExperiment.Handlers;
 /// A <see cref="Pipeline"/> for a handler pattern.
 /// </summary>
 /// <remarks>
-/// This will pass an instance of the <see cref="HandlerState{TInput, TResult}"/> to each step in the pipeline,
-/// and return the result of the first step for which <see cref="HandlerState{TInput, TResult}.WasHandled"/> is true.
+/// This will pass an instance of the <see cref="HandlerState{TInput, TResult}"/> to each step in the pipeline in turn,
+/// and returns the result of the first step for which <see cref="HandlerState{TInput, TResult}.WasHandled"/> is true.
 /// </remarks>
 public static class HandlerPipeline
 {
@@ -34,8 +34,9 @@ public static class HandlerPipeline
     /// state provided by <see cref="HandlerState{TInput, TResult}.For(TInput)"/>. The state is passed to the
     /// the first <see cref="PipelineStep{HandlerState}"/>. If the step returns
     /// <see cref="HandlerState{TInput, TResult}.NotHandled()"/>, it is passed to the
-    /// next step, until one returns <see cref="HandlerState{TInput, TResult}.Handled(TResult)"/>.
-    /// At this point the pipeline will be terminated.
+    /// next step, until one successfully handles the input and returns a result using
+    /// <see cref="HandlerState{TInput, TResult}.Handled(TResult)"/>. At this point the pipeline
+    /// will be terminated.
     /// </para>
     /// <para>
     /// On termination, you can inspect the resulting value using <see cref="HandlerState{TInput, TResult}.WasHandled(out TResult)"/>.
@@ -61,8 +62,9 @@ public static class HandlerPipeline
     /// state provided by <see cref="HandlerState{TInput, TResult}.For(TInput)"/>. The state is passed to the
     /// the first <see cref="PipelineStep{HandlerState}"/>. If the step returns
     /// <see cref="HandlerState{TInput, TResult}.NotHandled()"/>, it is passed to the
-    /// next step, until one returns <see cref="HandlerState{TInput, TResult}.Handled(TResult)"/>.
-    /// At this point the pipeline will be terminated.
+    /// next step, until one successfully handles the input and returns a result using
+    /// <see cref="HandlerState{TInput, TResult}.Handled(TResult)"/>. At this point the pipeline
+    /// will be terminated.
     /// </para>
     /// <para>
     /// On termination, you can inspect the resulting value using <see cref="HandlerState{TInput, TResult}.WasHandled(out TResult)"/>.

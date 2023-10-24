@@ -10,13 +10,13 @@ namespace PipelineExperiment;
 public static class PipelineStepExtensions
 {
     /// <summary>
-    /// An operator binds the output of a <see cref="PipelineStep{TState}"/> to a <see cref="PipelineStep{TState}"/>
+    /// An operator that binds the output of one <see cref="PipelineStep{TState}"/> to another <see cref="PipelineStep{TState}"/>
     /// provided by a <paramref name="selector"/> function.
     /// </summary>
     /// <typeparam name="TState">The type of the state.</typeparam>
     /// <param name="step">The step whose output is bound to the selected <see cref="PipelineStep{TState}"/>.</param>
     /// <param name="selector">The selector which takes the output of the <paramref name="step"/> and chooses a pipeline with which to proceed.</param>
-    /// <returns>A <see cref="PipelineStep{TState}"/> which, when executed, will execute the step, choose the appropriate pipeline, based on the result
+    /// <returns>A <see cref="PipelineStep{TState}"/> which, when executed, will execute the step, choose the appropriate pipeline, based on the result,
     /// and execute it using the result.</returns>
     public static PipelineStep<TState> Choose<TState>(this PipelineStep<TState> step, Func<TState, PipelineStep<TState>> selector)
     {
@@ -75,8 +75,9 @@ public static class PipelineStepExtensions
     /// An operator that binds a <see cref="PipelineStep{Tuple}"/> of a tuple of the
     /// <typeparamref name="TState"/>, and a <typeparamref name="TValue1"/>, producing
     /// a <see cref="PipelineStep{TState}"/> that will execute the <paramref name="stepWith"/> step
-    /// with current state and the value provided by executing the <paramref name="value1Accessor"/>
-    /// step with the value provided by the <paramref name="initialValue1"/> function.
+    /// with a tuple of the current state and the value provided by executing the <paramref name="value1Accessor"/>
+    /// step. The value accessor operates on the value provided by the <paramref name="initialValue1"/>
+    /// function. This wraps the input state instance to return the appropriate input state for the accessor step.
     /// </summary>
     /// <typeparam name="TState">The type of the state.</typeparam>
     /// <typeparam name="TValue1">The type of the value.</typeparam>
@@ -85,7 +86,7 @@ public static class PipelineStepExtensions
     /// <param name="initialValue1">A function which returns the initial value for executing the
     /// <paramref name="value1Accessor"/>. It has access to the state to do this.</param>
     /// <returns>A <see cref="PipelineStep{TState}"/> which executes the <paramref name="stepWith"/> with the state and the value,
-    /// and returns the updated state, discarding the updated value.</returns>
+    /// and returns the updated state.</returns>
     public static PipelineStep<TState> BindWith<TState, TValue1>(
         this PipelineStep<(TState State, TValue1 Value1)> stepWith,
         PipelineStep<TValue1> value1Accessor,
@@ -100,8 +101,9 @@ public static class PipelineStepExtensions
     /// An operator that binds a <see cref="PipelineStep{Tuple}"/> of a tuple of the
     /// <typeparamref name="TState"/>, and additional values of type <typeparamref name="TValue1"/> and <typeparamref name="TValue1"/>, producing
     /// a <see cref="PipelineStep{TState}"/> that will execute the <paramref name="stepWith"/> step
-    /// with current state and the values provided by executing the <paramref name="value1Accessor"/> and <paramref name="value2Accessor"/>
-    /// steps, with the values provided by the <paramref name="initialValue1"/> and <paramref name="initialValue2"/> functions (respectively).
+    /// with a tuple of the current state and the values provided by executing the <paramref name="value1Accessor"/>, and <paramref name="value2Accessor"/>
+    /// steps. The value accessors operate on the values provided by the <paramref name="initialValue1"/>, and <paramref name="initialValue2"/>
+    /// functions (respectively). These wrap the input state instance to return the appropriate input state for each accessor step.
     /// </summary>
     /// <typeparam name="TState">The type of the state.</typeparam>
     /// <typeparam name="TValue1">The type of the first value.</typeparam>
@@ -114,7 +116,7 @@ public static class PipelineStepExtensions
     /// <param name="initialValue2">A function which returns the initial value for executing the
     /// <paramref name="value2Accessor"/>. It has access to the state to do this.</param>
     /// <returns>A <see cref="PipelineStep{TState}"/> which executes the <paramref name="stepWith"/> with the state and the value,
-    /// and returns the updated state, discarding the updated value.</returns>
+    /// and returns the updated state.</returns>
     public static PipelineStep<TState> BindWith<TState, TValue1, TValue2>(
         this PipelineStep<(TState State, TValue1 Value1, TValue2 Value2)> stepWith,
         PipelineStep<TValue1> value1Accessor,
@@ -132,10 +134,12 @@ public static class PipelineStepExtensions
 
     /// <summary>
     /// An operator that binds a <see cref="PipelineStep{Tuple}"/> of a tuple of the
-    /// <typeparamref name="TState"/>, and additional values of type <typeparamref name="TValue1"/> and <typeparamref name="TValue1"/>, producing
-    /// a <see cref="PipelineStep{TState}"/> that will execute the <paramref name="stepWith"/> step
-    /// with current state and the values provided by executing the <paramref name="value1Accessor"/> and <paramref name="value2Accessor"/>
-    /// steps, with the values provided by the <paramref name="initialValue1"/> and <paramref name="initialValue2"/> functions (respectively).
+    /// <typeparamref name="TState"/>, and additional values of type <typeparamref name="TValue1"/>, <typeparamref name="TValue2"/>, and
+    /// <typeparamref name="TValue3"/>, producing a <see cref="PipelineStep{TState}"/> that will execute the <paramref name="stepWith"/> step
+    /// with a tuple of the current state and the values provided by executing the <paramref name="value1Accessor"/>, <paramref name="value2Accessor"/>,
+    /// and <paramref name="value3Accessor"/> steps. The value accessors operate on values provided by the <paramref name="initialValue1"/>,
+    /// <paramref name="initialValue2"/>, and <paramref name="initialValue3"/> functions (respectively). These wrap the input state to
+    /// return the appropriate input state for each value accessor step.
     /// </summary>
     /// <typeparam name="TState">The type of the state.</typeparam>
     /// <typeparam name="TValue1">The type of the first value.</typeparam>
@@ -152,7 +156,7 @@ public static class PipelineStepExtensions
     /// <param name="initialValue3">A function which returns the initial value for executing the
     /// <paramref name="value3Accessor"/>. It has access to the state to do this.</param>
     /// <returns>A <see cref="PipelineStep{TState}"/> which executes the <paramref name="stepWith"/> with the state and the value,
-    /// and returns the updated state, discarding the updated value.</returns>
+    /// and returns the updated state.</returns>
     public static PipelineStep<TState> BindWith<TState, TValue1, TValue2, TValue3>(
         this PipelineStep<(TState State, TValue1 Value1, TValue2 Value2, TValue3 Value3)> stepWith,
         PipelineStep<TValue1> value1Accessor,

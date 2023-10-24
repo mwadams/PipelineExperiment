@@ -40,7 +40,7 @@ namespace PipelineExperiment;
 public static class Pipeline
 {
     /// <summary>
-    /// An operator that provides current value of the state.
+    /// The identity operator. An operator that provides current value of the state.
     /// </summary>
     /// <typeparam name="TState">The type of the state.</typeparam>
     /// <returns>A pipeline step which, when executed, provides the current version of the state.</returns>
@@ -59,7 +59,8 @@ public static class Pipeline
     /// <para>
     /// When you build and execute the <see cref="Pipeline"/>, you pass it an initial instance of the <typeparamref name="TState"/>.
     /// </para>
-    /// <para>The state is passed to each <see cref="PipelineStep{TState}"/> in turn, and the final resulting state is returned.
+    /// <para>The initial state is passed to the first <see cref="PipelineStep{TState}"/> which returns an updated state instance, which is
+    /// passed to the next step, and so on, until the final resulting state is returned.
     /// </para>
     /// </remarks>
     public static PipelineStep<TState> Build<TState>(params PipelineStep<TState>[] steps)
@@ -86,7 +87,8 @@ public static class Pipeline
     /// <para>
     /// When you build and execute the <see cref="Pipeline"/>, you pass it an initial instance of the <typeparamref name="TState"/>.
     /// </para>
-    /// <para>The state is passed to each <see cref="PipelineStep{TState}"/> in turn, and the final resulting state is returned.
+    /// <para>The initial state is passed to the first <see cref="PipelineStep{TState}"/> which returns an updated state instance, which is
+    /// passed to the next step, and so on, until the final resulting state is returned.
     /// </para>
     /// </remarks>
     public static PipelineStep<TState> Build<TState>(params SyncPipelineStep<TState>[] steps)
@@ -115,9 +117,9 @@ public static class Pipeline
     /// <para>
     /// When you build and execute the <see cref="Pipeline"/>, you pass it an initial instance of the <typeparamref name="TState"/>.
     /// </para>
-    /// <para>The state is passed to each <see cref="PipelineStep{TState}"/> in turn until one returns an instance
-    /// of the <typeparamref name="TState"/> for which the <paramref name="shouldTerminate"/> predicate returns <see langword="true"/>.
-    /// At this point the pipeline will be terminated, and the resulting state returned.
+    /// <para>The initial state is passed to the first <see cref="PipelineStep{TState}"/> which returns an updated state instance, which is
+    /// passed to the next step, and so on, until one returns an instance for which the <paramref name="shouldTerminate"/> predicate
+    /// returns <see langword="true"/>. At this point the pipeline will be terminated, and the resulting state returned.
     /// </para>
     /// </remarks>
     public static PipelineStep<TState> Build<TState>(Predicate<TState> shouldTerminate, params PipelineStep<TState>[] steps)
@@ -150,9 +152,9 @@ public static class Pipeline
     /// <para>
     /// When you build and execute the <see cref="Pipeline"/>, you pass it an initial instance of the <typeparamref name="TState"/>.
     /// </para>
-    /// <para>The state is passed to each <see cref="PipelineStep{TState}"/> in turn until one returns an instance
-    /// of the <typeparamref name="TState"/> for which the <paramref name="shouldTerminate"/> predicate returns <see langword="true"/>.
-    /// At this point the pipeline will be terminated, and the resulting state returned.
+    /// <para>The initial state is passed to the first <see cref="PipelineStep{TState}"/> which returns an updated state instance, which is
+    /// passed to the next step, and so on, until one returns an instance for which the <paramref name="shouldTerminate"/> predicate
+    /// returns <see langword="true"/>. At this point the pipeline will be terminated, and the resulting state returned.
     /// </para>
     /// </remarks>
     public static PipelineStep<TState> Build<TState>(Predicate<TState> shouldTerminate, params SyncPipelineStep<TState>[] steps)
