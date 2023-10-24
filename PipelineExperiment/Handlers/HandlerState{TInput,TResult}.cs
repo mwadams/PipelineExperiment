@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace PipelineExperiment.Handlers;
 
 /// <summary>
-/// The state for an event handler.
+/// The state for a <see cref="HandlerPipeline"/>.
 /// </summary>
 /// <typeparam name="TInput">The type of the value to be handled.</typeparam>
 /// <typeparam name="TResult">The result of handling the value.</typeparam>
@@ -17,7 +17,8 @@ namespace PipelineExperiment.Handlers;
 /// state provided by <see cref="For(TInput)"/>. The state is passed to the
 /// the first <see cref="PipelineStep{HandlerState}"/>. If the step returns
 /// <see cref="HandlerState{TInput, TResult}.NotHandled()"/>, it is passed to the
-/// next step, until one returns <see cref="HandlerState{TInput, TResult}.Handled(TResult)"/>.
+/// next step, until one returns a result produced by calling
+/// <see cref="HandlerState{TInput, TResult}.Handled(TResult)"/>.
 /// At this point the pipeline will be terminated.
 /// </para>
 /// <para>
