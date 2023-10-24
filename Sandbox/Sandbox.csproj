@@ -7,6 +7,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+	<ItemGroup>
+	  <Compile Include="..\PipelineBenchmark\ExampleYarpPipeline.cs" Link="ExampleYarpPipeline.cs" />
+	</ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Yarp.ReverseProxy" Version="2.0.1" />
   </ItemGroup>

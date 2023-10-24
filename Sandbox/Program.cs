@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
+using PipelineExample;
 using PipelineExperiment;
-using Sandbox;
 using Yarp.ReverseProxy.Transforms;
 
 string[] paths = ["/foo", "/bar", "/fizz", "/", "/baz"];
