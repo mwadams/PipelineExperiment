@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Threading.Tasks;
+using System.Buffers;
 
 namespace PipelineExperiment;
 
@@ -24,6 +24,114 @@ public static class PipelineStepExtensions
         where TState : struct
     {
         return step.Bind(state => selector(state)(state));
+    }
+
+    /// <summary>
+    /// An operator that produces a step which executes two steps in parallel, and returns the result of the first step
+    /// to complete, cancelling the other.
+    /// </summary>
+    /// <typeparam name="TState">The type of the state of the steps.</typeparam>
+    /// <param name="attempt1">The step for the first attempt.</param>
+    /// <param name="attempt2">The step for the second attempt.</param>
+    /// <returns>A <see cref="PipelineStep{TState}"/> which returns the result of the first step to return a value.</returns>
+    /// <remarks>This executes the steps in parallel, returning the value from the first step that produces a result, and cancelling the other operations.</remarks>
+    public static PipelineStep<TState> FirstToComplete<TState>(
+        this PipelineStep<TState> attempt1,
+        PipelineStep<TState> attempt2)
+        where TState : struct, ICancellable<TState>
+    {
+        return async (TState input) =>
+        {
+            // Create a linked cancellation token source with whatever the current cancellation token might be
+            var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(input.CancellationToken);
+            TState wrappedInput = input.WithCancellationToken(cancellationTokenSource.Token);
+
+            try
+            {
+                ValueTask<TState> task1 = attempt1(wrappedInput);
+
+                if (task1.IsCompleted)
+                {
+                    return task1.Result;
+                }
+
+                ValueTask<TState> task2 = attempt2(wrappedInput);
+
+                if (task2.IsCompleted)
+                {
+                    return task2.Result;
+                }
+
+                // Wait for any task to complete
+                Task<TState> result = await Task.WhenAny(
+                    task1.AsTask(),
+                    task2.AsTask()).ConfigureAwait(false);
+
+                return result.Result;
+            }
+            finally
+            {
+                cancellationTokenSource.Cancel();
+            }
+        };
+    }
+
+    /// <summary>
+    /// An operator that produces a step which executes a number of steps in parallel, and returns the result of the first step
+    /// to complete, cancelling the other.
+    /// </summary>
+    /// <typeparam name="TState">The type of the state of the steps.</typeparam>
+    /// <param name="attempts">The steps to attempt.</param>
+    /// <returns>A <see cref="PipelineStep{TState}"/> which returns the result of the first step to return a value.</returns>
+    /// <remarks>This executes the steps in parallel, returning the value from the first step that produces a result, and cancelling the other operations.</remarks>
+    public static PipelineStep<TState> FirstToComplete<TState>(
+        params PipelineStep<TState>[] attempts)
+        where TState : struct, ICancellable<TState>
+    {
+        return async (TState input) =>
+        {
+            // Create a linked cancellation token source with whatever the current cancellation token might be
+            var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(input.CancellationToken);
+            TState wrappedInput = input.WithCancellationToken(cancellationTokenSource.Token);
+
+            ValueTask<TState>[] valueTasks = ArrayPool<ValueTask<TState>>.Shared.Rent(attempts.Length);
+            Task<TState>[]? tasks = null;
+
+            try
+            {
+                for (int i = 0; i < attempts.Length; ++i)
+                {
+#pragma warning disable CA2012 // Use ValueTasks correctly - we are deliberately storing this for a brief time for perf reasons
+                    valueTasks[i] = attempts[i](wrappedInput);
+#pragma warning restore CA2012 // Use ValueTasks correctly
+                    if (valueTasks[i].IsCompleted)
+                    {
+                        return valueTasks[i].Result;
+                    }
+                }
+
+                // We didn't get a synchronous run, so we wait for any task to complete.
+                tasks = ArrayPool<Task<TState>>.Shared.Rent(attempts.Length);
+                for (int i = 0; i < attempts.Length; ++i)
+                {
+                    tasks[i] = valueTasks[i].AsTask();
+                }
+
+                Task<TState> result = await Task.WhenAny(tasks.Take(attempts.Length)).ConfigureAwait(false);
+                return result.Result;
+            }
+            finally
+            {
+                ArrayPool<ValueTask<TState>>.Shared.Return(valueTasks);
+
+                if (tasks is Task<TState>[] t)
+                {
+                    ArrayPool<Task<TState>>.Shared.Return(t);
+                }
+
+                cancellationTokenSource.Cancel();
+            }
+        };
     }
 
     /// <summary>
