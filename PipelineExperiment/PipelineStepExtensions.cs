@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Threading.Tasks;
+
 namespace PipelineExperiment;
 
 /// <summary>
@@ -33,46 +35,51 @@ public static class PipelineStepExtensions
     /// <typeparam name="TState2">The type of the state of the second step.</typeparam>
     /// <param name="step1">The first input step.</param>
     /// <param name="step2">The second input step.</param>
-    /// <param name="cancellationTokenProvider">A function which can provide a cancellation token from the state.</param>
     /// <returns>A <see cref="PipelineStep{Tuple}"/> which returns a tuple of the results of the input steps.</returns>
-    /// <remarks>This executes the steps in parallel. See <see cref="CombineSteps{TState1, TState2, TState3}"/> for the sequential case.</remarks>
+    /// <remarks>This executes the steps in parallel. See <see cref="CombineSteps{TState1, TState2}"/> for the sequential case.</remarks>
     public static PipelineStep<(TState1 State1, TState2 State2)> ParallelCombineSteps<TState1, TState2>(
         this PipelineStep<TState1> step1,
-        PipelineStep<TState2> step2,
-        Func<TState1, CancellationToken>? cancellationTokenProvider = null)
+        PipelineStep<TState2> step2)
+        where TState1 : struct
+        where TState2 : struct
     {
         return async ((TState1 State1, TState2 State2) input) =>
         {
             ValueTask<TState1> task1 = step1(input.State1);
             ValueTask<TState2> task2 = step2(input.State2);
 
-            // Optimize for sync completion.
-            if (task1.IsCompleted)
-            {
-                if (task2.IsCompleted)
-                {
-                    return (task1.Result, task2.Result);
-                }
-                else
-                {
-                    return (task1.Result, await task2.ConfigureAwait(false));
-                }
-            }
-            else if (task2.IsCompleted)
-            {
-                if (task1.IsCompleted)
-                {
-                    return (task1.Result, task2.Result);
-                }
-                else
-                {
-                    return (await task1.ConfigureAwait(false), task2.Result);
-                }
-            }
+            return (await task1.ConfigureAwait(false), await task2.ConfigureAwait(false));
+        };
+    }
 
-            // Otherwise, convert to real tasks and await the result
-            await Task.WhenAll(task1.AsTask(), task2.AsTask()).ConfigureAwait(false);
-            return (task1.Result, task2.Result);
+    /// <summary>
+    /// An operator that combines three steps to produce a step which takes a tuple of the
+    /// state types of the input steps, and processes each value in the tuple with the
+    /// appropriate step, returning a tuple of the results.
+    /// </summary>
+    /// <typeparam name="TState1">The type of the state of the first step.</typeparam>
+    /// <typeparam name="TState2">The type of the state of the second step.</typeparam>
+    /// <typeparam name="TState3">The type of the state of the third step.</typeparam>
+    /// <param name="step1">The first input step.</param>
+    /// <param name="step2">The second input step.</param>
+    /// <param name="step3">The third input step.</param>
+    /// <returns>A <see cref="PipelineStep{Tuple}"/> which returns a tuple of the results of the input steps.</returns>
+    /// <remarks>This executes the steps in parallel. See <see cref="CombineSteps{TState1, TState2, TState3}"/> for the sequential case.</remarks>
+    public static PipelineStep<(TState1 State1, TState2 State2, TState3 State3)> ParallelCombineSteps<TState1, TState2, TState3>(
+        this PipelineStep<TState1> step1,
+        PipelineStep<TState2> step2,
+        PipelineStep<TState3> step3)
+        where TState1 : struct
+        where TState2 : struct
+        where TState3 : struct
+    {
+        return async ((TState1 State1, TState2 State2, TState3 State3) input) =>
+        {
+            ValueTask<TState1> task1 = step1(input.State1);
+            ValueTask<TState2> task2 = step2(input.State2);
+            ValueTask<TState3> task3 = step3(input.State3);
+
+            return (await task1.ConfigureAwait(false), await task2.ConfigureAwait(false), await task3.ConfigureAwait(false));
         };
     }
 
