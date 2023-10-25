@@ -23,7 +23,6 @@ public class AllSortsBenchmark
             new() { HttpContext = new DefaultHttpContext() { Request = { Path = "/foo" } }, Path = "/foo" },
             new() { HttpContext = new DefaultHttpContext() { Request = { Path = "/bar" } }, Path = "/bar" },
             new() { HttpContext = new DefaultHttpContext() { Request = { Path = "/fizz" } }, Path = "/fizz" },
-            new() { HttpContext = new DefaultHttpContext() { Request = { Path = "/buzz" } }, Path = "/buzz" },
             new() { HttpContext = new DefaultHttpContext() { Request = { Path = "/" } }, Path = "/" },
             new() { HttpContext = new DefaultHttpContext() { Request = { Path = "/baz" } }, Path = "/baz" },
         ];

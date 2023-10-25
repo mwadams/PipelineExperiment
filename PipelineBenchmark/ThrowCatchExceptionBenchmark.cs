@@ -1,4 +1,4 @@
-﻿// <copyright file="AllSortsForceAsyncBenchmark.cs" company="Endjin Limited">
+﻿// <copyright file="ThrowCatchExceptionBenchmark.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -16,15 +16,11 @@ namespace Corvus.UriTemplates.Benchmarking;
 /// Matches tables.
 /// </summary>
 [MemoryDiagnoser]
-public class AllSortsForceAsyncBenchmark
+public class ThrowCatchExceptionBenchmark
 {
     private static readonly RequestTransformContext[] Contexts =
         [
-            new() { HttpContext = new DefaultHttpContext() { Request = { Path = "/foo" } }, Path = "/foo" },
-            new() { HttpContext = new DefaultHttpContext() { Request = { Path = "/bar" } }, Path = "/bar" },
-            new() { HttpContext = new DefaultHttpContext() { Request = { Path = "/fizz" } }, Path = "/fizz" },
-            new() { HttpContext = new DefaultHttpContext() { Request = { Path = "/" } }, Path = "/" },
-            new() { HttpContext = new DefaultHttpContext() { Request = { Path = "/baz" } }, Path = "/baz" },
+            new() { HttpContext = new DefaultHttpContext() { Request = { Path = "/buzz" } }, Path = "/buzz" },
         ];
 
     /// <summary>
@@ -39,7 +35,7 @@ public class AllSortsForceAsyncBenchmark
         bool shouldForward = true;
         foreach (RequestTransformContext context in Contexts)
         {
-            YarpPipelineState result = await ExampleYarpPipeline.ForceAsyncInstance(YarpPipelineState.For(context)).ConfigureAwait(false);
+            YarpPipelineState result = await ExampleYarpPipeline.Instance(YarpPipelineState.For(context)).ConfigureAwait(false);
             shouldForward &= result.ShouldForward(out NonForwardedResponseDetails responseDetails);
         }
 
@@ -58,7 +54,7 @@ public class AllSortsForceAsyncBenchmark
         bool shouldForward = true;
         foreach (RequestTransformContext context in Contexts)
         {
-            YarpPipelineState result = await ExampleYarpPipelineWithLogging.ForceAsyncInstance(YarpPipelineState.For(context)).ConfigureAwait(false);
+            YarpPipelineState result = await ExampleYarpPipelineWithLogging.Instance(YarpPipelineState.For(context)).ConfigureAwait(false);
             shouldForward &= result.ShouldForward(out NonForwardedResponseDetails responseDetails);
         }
 
