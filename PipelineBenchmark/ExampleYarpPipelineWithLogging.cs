@@ -107,7 +107,7 @@ public static class ExampleYarpPipelineWithLogging
             {
                 if (state.Logger.IsEnabled(LogLevel.Information))
                 {
-                    state.Logger.LogInformation(Pipeline.EventIds.Retrying, message: $"Retrying: {state.FailureCount}");
+                    state.Logger.LogInformation(Pipeline.EventIds.Retrying, message: "Retrying: {failureCount}", state.FailureCount);
                 }
 
                 await Task.Delay(0).ConfigureAwait(false); // You could do a back off using state.FailureCount, or whatever!
@@ -141,7 +141,7 @@ public static class ExampleYarpPipelineWithLogging
             {
                 if (state.Logger.IsEnabled(LogLevel.Information))
                 {
-                    state.Logger.LogInformation(Pipeline.EventIds.Retrying, message: $"Retrying: {state.FailureCount}");
+                    state.Logger.LogInformation(Pipeline.EventIds.Retrying, message: "Retrying: {failureCount}", state.FailureCount);
                 }
 
                 await Task.Delay(0).ConfigureAwait(false); // You could do a back off using state.FailureCount, or whatever!
