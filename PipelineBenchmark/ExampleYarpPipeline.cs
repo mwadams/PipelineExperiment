@@ -78,7 +78,7 @@ public static class ExampleYarpPipeline
             static state => state.ExecutionStatus == PipelineStepStatus.TransientFailure && state.FailureCount < 5, // This is doing a simple count, but you could layer policy based on state.TryGetErrorDetails()
             async state =>
             {
-                Console.WriteLine("Retrying...");                
+                Console.WriteLine("Retrying...");
                 await Task.Delay(0).ConfigureAwait(false); // You could do a back off using state.FailureCount, or whatever!
                 return state;
             })
