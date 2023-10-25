@@ -77,7 +77,7 @@ public readonly struct YarpPipelineState :
     /// initialize the <see cref="YarpPipelineState"/>.</param>
     /// <param name="logger">The logger to use for the context.</param>
     /// <returns>The initialized instance.</returns>
-    public static YarpPipelineState For(RequestTransformContext requestTransformContext, ILogger<YarpPipelineState>? logger = null)
+    public static YarpPipelineState For(RequestTransformContext requestTransformContext, ILogger? logger = null)
     {
         return new(requestTransformContext, default, TransformState.Continue, default, default, 0, logger ?? NullLogger<YarpPipelineState>.Instance, default);
     }

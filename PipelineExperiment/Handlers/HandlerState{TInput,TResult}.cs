@@ -67,7 +67,7 @@ public readonly struct HandlerState<TInput, TResult> : ILoggable
     /// <returns>The <see cref="HandlerState{TInput, TResult}"/> with the given result value.</returns>
     public HandlerState<TInput, TResult> Handled(TResult result)
     {
-        this.Logger.LogInformation(Pipeline.EventIds.Result, "Handled");
+        this.Logger.LogInformation(Pipeline.EventIds.Result, "handled");
         return new(this.Input, result, true, this.Logger);
     }
 
@@ -78,7 +78,7 @@ public readonly struct HandlerState<TInput, TResult> : ILoggable
     /// <returns>The unchanged <see cref="HandlerState{TInput, TResult}"/>.</returns>
     public HandlerState<TInput, TResult> NotHandled()
     {
-        this.Logger.LogInformation(Pipeline.EventIds.Result, "Not handled");
+        this.Logger.LogInformation(Pipeline.EventIds.Result, "not-handled");
         return this;
     }
 

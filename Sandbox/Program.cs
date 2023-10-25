@@ -1,21 +1,24 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PipelineExample;
 using PipelineExperiment;
+using PipelineExperiment.Handlers;
 using Yarp.ReverseProxy.Transforms;
 
 string[] paths = ["/foo", "/bar", "/fizz", "/buzz", "/", "/baz"];
 
 using ILoggerFactory loggerFactory =
     LoggerFactory.Create(builder =>
+    {
+        builder.SetMinimumLevel(LogLevel.Trace);
         builder.AddSimpleConsole(options =>
         {
             options.IncludeScopes = true;
             options.SingleLine = true;
-        }));
+        });
+    });
 
-ILogger<YarpPipelineState> logger = loggerFactory.CreateLogger<YarpPipelineState>();
+ILogger logger = loggerFactory.CreateLogger("Yarp pipeline logging");
 
 foreach (string path in paths)
 {
