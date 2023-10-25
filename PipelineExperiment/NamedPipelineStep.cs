@@ -2,8 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Microsoft.Extensions.Logging;
-
 namespace PipelineExperiment;
 
 /// <summary>

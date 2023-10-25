@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using PipelineExample;
 using PipelineExperiment;
-using PipelineExperiment.Handlers;
 using Yarp.ReverseProxy.Transforms;
 
 string[] paths = ["/foo", "/bar", "/fizz", "/buzz", "/", "/baz"];
@@ -14,7 +13,7 @@ using ILoggerFactory loggerFactory =
         builder.AddSimpleConsole(options =>
         {
             options.IncludeScopes = true;
-            options.SingleLine = true;
+            options.SingleLine = false;
         });
     });
 
