@@ -2,6 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Runtime.CompilerServices;
+using Microsoft.Extensions.Logging;
+
 namespace PipelineExperiment;
 
 /// <summary>
@@ -178,5 +181,210 @@ public static class Pipeline
 
             return ValueTask.FromResult(currentResult);
         };
+    }
+
+    /// <summary>
+    /// An operator that provides a <see cref="PipelineStep{TState}"/> which executes a series of steps in order, with entry and exit logging.
+    /// </summary>
+    /// <typeparam name="TState">The type of the state for the pipeline.</typeparam>
+    /// <param name="level">The log level to use for entry/exit logging.</param>
+    /// <param name="steps">The steps to be executed, in order.</param>
+    /// <returns>A step representing the pipeline.</returns>
+    /// <remarks>
+    /// <para>
+    /// When you build and execute the <see cref="Pipeline"/>, you pass it an initial instance of the <typeparamref name="TState"/>.
+    /// </para>
+    /// <para>The initial state is passed to the first <see cref="PipelineStep{TState}"/> which returns an updated state instance, which is
+    /// passed to the next step, and so on, until the final resulting state is returned.
+    /// </para>
+    /// </remarks>
+    public static PipelineStep<TState> BuildWithStepLogging<TState>(LogLevel level, params NamedPipelineStep<TState>[] steps)
+        where TState : struct, ILoggable<TState>
+    {
+        return async state =>
+        {
+            TState currentResult = state;
+            foreach (NamedPipelineStep<TState> step in steps)
+            {
+                LogEntry(level, state, step.EventId);
+
+                currentResult = await step.Step(currentResult).ConfigureAwait(false);
+
+                LogExit(level, state, step.EventId);
+            }
+
+            return currentResult;
+        };
+    }
+
+    /// <summary>
+    /// An operator that provides a <see cref="PipelineStep{TState}"/> which executes a series of steps in order, with entry and exit logging.
+    /// </summary>
+    /// <typeparam name="TState">The type of the state for the pipeline.</typeparam>
+    /// <param name="level">The log level to use for entry/exit logging.</param>
+    /// <param name="steps">The steps to be executed, in order. In this overload, they are all synchronous functions.</param>
+    /// <returns>A step representing the pipeline.</returns>
+    /// <remarks>
+    /// <para>
+    /// When you build and execute the <see cref="Pipeline"/>, you pass it an initial instance of the <typeparamref name="TState"/>.
+    /// </para>
+    /// <para>The initial state is passed to the first <see cref="PipelineStep{TState}"/> which returns an updated state instance, which is
+    /// passed to the next step, and so on, until the final resulting state is returned.
+    /// </para>
+    /// </remarks>
+    public static PipelineStep<TState> BuildWithStepLogging<TState>(LogLevel level, params NamedSyncPipelineStep<TState>[] steps)
+        where TState : struct, ILoggable<TState>
+    {
+        return state =>
+        {
+            TState currentResult = state;
+            foreach (NamedSyncPipelineStep<TState> step in steps)
+            {
+                LogEntry(level, state, step.EventId);
+
+                currentResult = step.Step(currentResult);
+
+                LogExit(level, state, step.EventId);
+            }
+
+            return ValueTask.FromResult(currentResult);
+        };
+    }
+
+    /// <summary>
+    /// An operator that provides a <see cref="PipelineStep{TState}"/> which executes a series of steps in order, with
+    /// the ability to terminate early if the <paramref name="shouldTerminate"/> predicate returns true. It also logs on entry, and
+    /// exit or termination.
+    /// </summary>
+    /// <typeparam name="TState">The type of the state for the pipeline.</typeparam>
+    /// <param name="shouldTerminate">A predicate which returns true if the pipeline should terminate early.</param>
+    /// <param name="level">The log level to use for entry/exit logging.</param>
+    /// <param name="steps">The steps to be executed, in order.</param>
+    /// <returns>A step representing the pipeline.</returns>
+    /// <remarks>
+    /// <para>
+    /// When you build and execute the <see cref="Pipeline"/>, you pass it an initial instance of the <typeparamref name="TState"/>.
+    /// </para>
+    /// <para>The initial state is passed to the first <see cref="PipelineStep{TState}"/> which returns an updated state instance, which is
+    /// passed to the next step, and so on, until one returns an instance for which the <paramref name="shouldTerminate"/> predicate
+    /// returns <see langword="true"/>. At this point the pipeline will be terminated, and the resulting state returned.
+    /// </para>
+    /// </remarks>
+    public static PipelineStep<TState> BuildWithStepLogging<TState>(Predicate<TState> shouldTerminate, LogLevel level, params NamedPipelineStep<TState>[] steps)
+        where TState : struct, ILoggable<TState>
+    {
+        return async state =>
+        {
+            TState currentResult = state;
+            foreach (NamedPipelineStep<TState> step in steps)
+            {
+                LogEntry(level, state, step.EventId);
+
+                currentResult = await step.Step(currentResult).ConfigureAwait(false);
+
+                if (shouldTerminate(currentResult))
+                {
+                    LogTerminated(level, state, step.EventId);
+                    return currentResult;
+                }
+
+                LogExit(level, state, step.EventId);
+            }
+
+            return currentResult;
+        };
+    }
+
+    /// <summary>
+    /// An operator that provides a <see cref="PipelineStep{TState}"/> which executes a series of steps in order, with
+    /// the ability to terminate early if the <paramref name="shouldTerminate"/> predicate returns true.
+    /// </summary>
+    /// <typeparam name="TState">The type of the state for the pipeline.</typeparam>
+    /// <param name="shouldTerminate">A predicate which returns true if the pipeline should terminate early.</param>
+    /// <param name="level">The log level to use for entry/exit logging.</param>
+    /// <param name="steps">The steps to be executed, in order. In this overload, they are all synchronous functions.</param>
+    /// <returns>A step representing the pipeline.</returns>
+    /// <remarks>
+    /// <para>
+    /// When you build and execute the <see cref="Pipeline"/>, you pass it an initial instance of the <typeparamref name="TState"/>.
+    /// </para>
+    /// <para>The initial state is passed to the first <see cref="PipelineStep{TState}"/> which returns an updated state instance, which is
+    /// passed to the next step, and so on, until one returns an instance for which the <paramref name="shouldTerminate"/> predicate
+    /// returns <see langword="true"/>. At this point the pipeline will be terminated, and the resulting state returned.
+    /// </para>
+    /// </remarks>
+    public static PipelineStep<TState> BuildWithStepLogging<TState>(Predicate<TState> shouldTerminate, LogLevel level, params NamedSyncPipelineStep<TState>[] steps)
+        where TState : struct, ILoggable<TState>
+    {
+        return state =>
+        {
+            TState currentResult = state;
+            foreach (NamedSyncPipelineStep<TState> step in steps)
+            {
+                LogEntry(level, state, step.EventId);
+
+                currentResult = step.Step(currentResult);
+                if (shouldTerminate(currentResult))
+                {
+                    LogTerminated(level, state, step.EventId);
+                    return ValueTask.FromResult(currentResult);
+                }
+
+                LogExit(level, state, step.EventId);
+            }
+
+            return ValueTask.FromResult(currentResult);
+        };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void LogTerminated<TState>(LogLevel level, in TState state, in EventId eventId)
+        where TState : struct, ILoggable<TState>
+    {
+        Log(level, state, eventId, "Terminated");
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void LogEntry<TState>(LogLevel level, in TState state, in EventId eventId)
+        where TState : struct, ILoggable<TState>
+    {
+        Log(level, state, eventId, "Entered");
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void LogExit<TState>(LogLevel level, in TState state, in EventId eventId)
+        where TState : struct, ILoggable<TState>
+    {
+        Log(level, state, eventId, "Exited");
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void Log<TState>(LogLevel level, TState state, in EventId eventId, string message)
+        where TState : struct, ILoggable<TState>
+    {
+        if (state.Logger.IsEnabled(level))
+        {
+            switch (level)
+            {
+                case LogLevel.Debug:
+                    state.Logger.LogDebug(eventId, message);
+                    break;
+                case LogLevel.Trace:
+                    state.Logger.LogTrace(eventId, message);
+                    break;
+                case LogLevel.Information:
+                    state.Logger.LogInformation(eventId, message);
+                    break;
+                case LogLevel.Warning:
+                    state.Logger.LogWarning(eventId, message);
+                    break;
+                case LogLevel.Error:
+                    state.Logger.LogError(eventId, message);
+                    break;
+                case LogLevel.Critical:
+                    state.Logger.LogCritical(eventId, message);
+                    break;
+            }
+        }
     }
 }

@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using Microsoft.Extensions.Logging;
 
 namespace PipelineExperiment;
 
