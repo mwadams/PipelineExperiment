@@ -9,12 +9,10 @@ namespace PipelineExperiment;
 /// <summary>
 /// State that supports logging.
 /// </summary>
-/// <typeparam name="TState">The type implementing the interface.</typeparam>
-public interface ILoggable<TState>
-    where TState : ILoggable<TState>
+public interface ILoggable
 {
     /// <summary>
     /// Gets the logger for the state.
     /// </summary>
-    ILogger<TState> Logger { get; }
+    ILogger Logger { get; }
 }

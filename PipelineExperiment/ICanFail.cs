@@ -42,6 +42,12 @@ public interface ICanFail<TState, TError>
     TState ResetFailureState();
 
     /// <summary>
+    /// Returns the state in a condition where it is prepared to retry.
+    /// </summary>
+    /// <returns>The updated state.</returns>
+    TState PrepareToRetry();
+
+    /// <summary>
     /// Returns the state with the execution status set to
     /// <see cref="PipelineStepStatus.PermanentFailure"/>.
     /// </summary>

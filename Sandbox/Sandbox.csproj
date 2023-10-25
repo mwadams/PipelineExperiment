@@ -9,6 +9,7 @@
 
 	<ItemGroup>
 	  <Compile Include="..\PipelineBenchmark\ExampleYarpPipeline.cs" Link="ExampleYarpPipeline.cs" />
+	  <Compile Include="..\PipelineBenchmark\ExampleYarpPipelineWithLogging.cs" Link="ExampleYarpPipelineWithLogging.cs" />
 	</ItemGroup>
 
   <ItemGroup>

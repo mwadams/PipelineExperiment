@@ -33,13 +33,32 @@ public class AllSortsBenchmark
     /// <returns>
     /// A result, to ensure that the code under test does not get optimized out of existence.
     /// </returns>
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public async Task<bool> RunPipeline()
     {
         bool shouldForward = true;
         foreach (RequestTransformContext context in Contexts)
         {
             YarpPipelineState result = await ExampleYarpPipeline.Instance(YarpPipelineState.For(context)).ConfigureAwait(false);
+            shouldForward &= result.ShouldForward(out NonForwardedResponseDetails responseDetails);
+        }
+
+        return shouldForward;
+    }
+
+    /// <summary>
+    /// Extract parameters from a URI template using the Corvus implementation of the Tavis API.
+    /// </summary>
+    /// <returns>
+    /// A result, to ensure that the code under test does not get optimized out of existence.
+    /// </returns>
+    [Benchmark]
+    public async Task<bool> RunPipelineWithLogging()
+    {
+        bool shouldForward = true;
+        foreach (RequestTransformContext context in Contexts)
+        {
+            YarpPipelineState result = await ExampleYarpPipelineWithLogging.Instance(YarpPipelineState.For(context)).ConfigureAwait(false);
             shouldForward &= result.ShouldForward(out NonForwardedResponseDetails responseDetails);
         }
 

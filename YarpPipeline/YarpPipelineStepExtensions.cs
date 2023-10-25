@@ -20,7 +20,7 @@ public static class YarpPipelineStepExtensions
     /// and execute it using the result.</returns>
     public static PipelineStep<YarpPipelineState> Retry(this PipelineStep<YarpPipelineState> step, Predicate<YarpPipelineState> shouldRetry, PipelineStep<YarpPipelineState>? beforeRetry = null)
     {
-        return PipelineStepExtensions.Retry<YarpPipelineState, YarpPipelineError>(step, shouldRetry, beforeRetry);
+        return step.Retry<YarpPipelineState, YarpPipelineError>(shouldRetry, beforeRetry);
     }
 
     /// <summary>
@@ -34,7 +34,7 @@ public static class YarpPipelineStepExtensions
         this PipelineStep<YarpPipelineState> step,
         PipelineStep<YarpPipelineState> onError)
     {
-        return PipelineStepExtensions.OnError<YarpPipelineState, YarpPipelineError>(step, onError);
+        return step.OnError<YarpPipelineState, YarpPipelineError>(onError);
     }
 
     /// <summary>
@@ -48,6 +48,6 @@ public static class YarpPipelineStepExtensions
         this PipelineStep<YarpPipelineState> step,
         SyncPipelineStep<YarpPipelineState> onError)
     {
-        return PipelineStepExtensions.OnError<YarpPipelineState, YarpPipelineError>(step, onError);
+        return step.OnError<YarpPipelineState, YarpPipelineError>(onError);
     }
 }

@@ -21,7 +21,7 @@ public static class PipelineStepExtensions
     /// <param name="logExit">The method that performs the logging. It is provided with the state both before and after the step.</param>
     /// <returns>A step which wraps the input step and logs on entry and exit.</returns>
     public static PipelineStep<TState> LogEntryAndExit<TState>(this PipelineStep<TState> step, Action<TState> logEntry, Action<TState, TState> logExit)
-        where TState : struct, ILoggable<TState>
+        where TState : struct, ILoggable
     {
         return step.Bind(
             (TState state) =>
@@ -44,7 +44,7 @@ public static class PipelineStepExtensions
     /// <param name="logEntry">The method that performs the logging on entry. It is provided with the state before the step.</param>
     /// <returns>A step which wraps the input step and logs on entry.</returns>
     public static PipelineStep<TState> LogEntry<TState>(this PipelineStep<TState> step, Action<TState> logEntry)
-        where TState : struct, ILoggable<TState>
+        where TState : struct, ILoggable
     {
         return step.Bind(
             (TState state) =>
@@ -52,10 +52,7 @@ public static class PipelineStepExtensions
                 logEntry(state);
                 return state;
             },
-            (_, innerState) =>
-            {
-                return innerState;
-            });
+            (_, innerState) => innerState);
     }
 
     /// <summary>
@@ -66,13 +63,10 @@ public static class PipelineStepExtensions
     /// <param name="logExit">The method that performs the logging on exit. It is provided with the state both before and after the step.</param>
     /// <returns>A step which wraps the input step and logs on entry.</returns>
     public static PipelineStep<TState> LogExit<TState>(this PipelineStep<TState> step, Action<TState, TState> logExit)
-        where TState : struct, ILoggable<TState>
+        where TState : struct, ILoggable
     {
         return step.Bind(
-            (TState state) =>
-            {
-                return state;
-            },
+            (TState state) => state,
             (entryState, exitState) =>
             {
                 logExit(entryState, exitState);
@@ -172,6 +166,7 @@ public static class PipelineStepExtensions
                 if (beforeRetry is not null)
                 {
                     currentState = await beforeRetry(currentState).ConfigureAwait(false);
+                    currentState = currentState.PrepareToRetry();
                 }
             }
         };

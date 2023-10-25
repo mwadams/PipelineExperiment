@@ -3,6 +3,8 @@
 // </copyright>
 
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace PipelineExperiment.Handlers;
 
@@ -14,7 +16,7 @@ namespace PipelineExperiment.Handlers;
 /// <remarks>
 /// <para>
 /// When you build and execute <see cref="HandlerPipeline"/>, you start with the
-/// state provided by <see cref="For(TInput)"/>. The state is passed to the
+/// state provided by <see cref="For(TInput, ILogger?)"/>. The state is passed to the
 /// the first <see cref="PipelineStep{HandlerState}"/>. If the step returns
 /// <see cref="HandlerState{TInput, TResult}.NotHandled()"/>, it is passed to the
 /// next step, until one returns a result produced by calling
@@ -25,16 +27,17 @@ namespace PipelineExperiment.Handlers;
 /// On termination, you can inspect the resulting value using <see cref="WasHandled(out TResult)"/>.
 /// </para>
 /// </remarks>
-public readonly struct HandlerState<TInput, TResult>
+public readonly struct HandlerState<TInput, TResult> : ILoggable
 {
     private readonly TResult? result;
     private readonly bool handled;
 
-    private HandlerState(TInput input, TResult? result, bool handled)
+    private HandlerState(TInput input, TResult? result, bool handled, ILogger? logger)
     {
         this.result = result;
         this.handled = handled;
         this.Input = input;
+        this.Logger = logger ?? NullLogger<HandlerState<TInput, TResult>>.Instance;
     }
 
     /// <summary>
@@ -42,14 +45,18 @@ public readonly struct HandlerState<TInput, TResult>
     /// </summary>
     public TInput Input { get; }
 
+    /// <inheritdoc/>
+    public ILogger Logger { get; }
+
     /// <summary>
     /// Creates an instance of the handler state for the given input value.
     /// </summary>
     /// <param name="input">The input value.</param>
+    /// <param name="logger">The (optional) <see cref="ILoggable"/> instance.</param>
     /// <returns>The <see cref="HandlerState{TInput, TResult}"/> for the input value.</returns>
-    public static HandlerState<TInput, TResult> For(TInput input)
+    public static HandlerState<TInput, TResult> For(TInput input, ILogger? logger = null)
     {
-        return new(input, default, false);
+        return new(input, default, false, logger);
     }
 
     /// <summary>
@@ -60,7 +67,8 @@ public readonly struct HandlerState<TInput, TResult>
     /// <returns>The <see cref="HandlerState{TInput, TResult}"/> with the given result value.</returns>
     public HandlerState<TInput, TResult> Handled(TResult result)
     {
-        return new(this.Input, result, true);
+        this.Logger.LogInformation(Pipeline.EventIds.Result, "Handled");
+        return new(this.Input, result, true, this.Logger);
     }
 
     /// <summary>
@@ -70,6 +78,7 @@ public readonly struct HandlerState<TInput, TResult>
     /// <returns>The unchanged <see cref="HandlerState{TInput, TResult}"/>.</returns>
     public HandlerState<TInput, TResult> NotHandled()
     {
+        this.Logger.LogInformation(Pipeline.EventIds.Result, "Not handled");
         return this;
     }
 
